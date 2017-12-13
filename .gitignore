@@ -20,6 +20,7 @@ task/src/main/resources/
 build/target/
 standalone-build/
 
+*.pdf
 *.ser
 *.class
 *~
