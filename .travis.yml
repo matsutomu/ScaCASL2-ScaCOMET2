@@ -1,0 +1,6 @@
+language: scala
+sudo: true
+jdk:
+  - oraclejdk8
+script:
+  - sbt test
