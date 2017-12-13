@@ -1,5 +1,5 @@
 
-# CASL2 / COMET2  by Scala  [![Build Status](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2.svg?branch=master)](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2)
+# CASL2 / COMET2  by Scala  [![Build Status](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2.svg?branch=master)](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2) [![Coverage Status](https://coveralls.io/repos/github/matsutomu/ScaCASL2-ScaCOMET2/badge.svg?branch=master)](https://coveralls.io/github/matsutomu/ScaCASL2-ScaCOMET2?branch=master)
 
 CASL2 / COMET2 を Scalaで実装しました。
 
