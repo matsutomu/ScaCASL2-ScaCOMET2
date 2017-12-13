@@ -1,5 +1,5 @@
 
-# CASL2 / COMET2  by Scala
+# CASL2 / COMET2  by Scala  [![Build Status](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2.svg?branch=master)](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2)
 
 CASL2 / COMET2 を Scalaで実装しました。
 
