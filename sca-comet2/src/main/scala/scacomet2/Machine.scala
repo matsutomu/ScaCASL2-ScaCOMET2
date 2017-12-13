@@ -8,6 +8,9 @@ import scala.collection.mutable.ListBuffer
 
 class Machine {
 
+  //
+  // memory
+  //
   private[scacomet2] var memory = new Array[Int](65536)
 
   def storeToMemory(binaries: Array[Int]): Unit = {
@@ -15,10 +18,11 @@ class Machine {
     binaries.copyToArray(this.memory, 0, binaries.length)
   }
 
+
+
   //
   // Registers
   //
-
   val gr0 = GeneralRegister(0)
   val gr1 = IndexRegister(0)
   val gr2 = IndexRegister(0)
