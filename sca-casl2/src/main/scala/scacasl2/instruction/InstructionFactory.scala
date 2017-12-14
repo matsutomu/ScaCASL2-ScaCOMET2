@@ -1,6 +1,7 @@
 package scacasl2.instruction
 
 import scacasl2.operand._
+import scacasl2.Helper
 
 /**
   * Create Instruction from Instruction Literal.
@@ -374,7 +375,7 @@ object InstructionFactory {
       if (adr.startsWith("=")) { // this is bug
         throw new IllegalArgumentException(s" please $adr replace to LABEL ")
       } else if (adr.matches(REGEX_NUM)) {
-        AddressOfOperand(adr, this.a2l(java.lang.Integer.parseInt(adr)))
+        AddressOfOperand(adr, Helper.bitToUnsignedShort(java.lang.Integer.parseInt(adr)))
       } else if (adr.matches(REGEX_HEX)) {
         AddressOfOperand(adr, java.lang.Integer.parseInt(adr.drop(1), 16))
       } else if (adr.matches(REGEX_LABEL)
@@ -393,7 +394,7 @@ object InstructionFactory {
   private def analyzeConstants(const: String): ElementOfDcInstruction = {
     try {
       if (const.matches(REGEX_NUM)) {
-        ConstsNumOfOperand(const, this.a2l(java.lang.Integer.parseInt(const)))
+        ConstsNumOfOperand(const, Helper.bitToUnsignedShort(java.lang.Integer.parseInt(const)))
       } else if (const.matches(REGEX_HEX)) {
         ConstsNumOfOperand(const,
                            java.lang.Integer.parseInt(const.drop(1), 16))
@@ -421,28 +422,5 @@ object InstructionFactory {
     }
   }
 
-  /**
-    * signed -> unsigned
-    *
-    * @param x
-    * @return
-    */
-  def a2l(x: Int) = {
-    val u = x & 0xffff
-    if (0 <= u) u
-    else u + (1 << 16)
-  }
-
-  /** unsigned -> signed
-    *
-    * @param x
-    * @return
-    */
-  def l2a(x: Int) = {
-    val u = x & 0xffff
-    if (0 <= u && u <= 0x7fff) u
-    else if (0x8000 <= u && u <= 0xffff) u - (1 << 16)
-    else throw new IllegalArgumentException
-  }
 
 }

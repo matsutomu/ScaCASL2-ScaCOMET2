@@ -117,13 +117,13 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
         "DC", 0x00,
         OperandDc(
           List(
-            ConstsNumOfOperand("-32769", InstructionFactory.a2l(32767)),
-            ConstsNumOfOperand("-32768", InstructionFactory.a2l(-32768)),
-            ConstsNumOfOperand("-1", InstructionFactory.a2l(-1)),
-            ConstsNumOfOperand("0", InstructionFactory.a2l(0)),
-            ConstsNumOfOperand("1", InstructionFactory.a2l(1)),
-            ConstsNumOfOperand("32767", InstructionFactory.a2l(32767)),
-            ConstsNumOfOperand("32768", InstructionFactory.a2l(-32768)),
+            ConstsNumOfOperand("-32769", Helper.bitToUnsignedShort(32767)),
+            ConstsNumOfOperand("-32768", Helper.bitToUnsignedShort(-32768)),
+            ConstsNumOfOperand("-1", Helper.bitToUnsignedShort(-1)),
+            ConstsNumOfOperand("0", Helper.bitToUnsignedShort(0)),
+            ConstsNumOfOperand("1", Helper.bitToUnsignedShort(1)),
+            ConstsNumOfOperand("32767", Helper.bitToUnsignedShort(32767)),
+            ConstsNumOfOperand("32768", Helper.bitToUnsignedShort(-32768)),
             ConstsNumOfOperand("#0000", 0),
             ConstsNumOfOperand("#0001", 1),
             ConstsNumOfOperand("#fffe", 65534),
@@ -418,8 +418,8 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
       MachineInstruction("SUBA1", OperandR1R2(2, 2), InstructionFactory.INSTRUCTION_INF_MAP("SUBA1"), "COUNT1"), // 1 word
       MachineInstruction("AND1" , OperandR1R2(1, 1), InstructionFactory.INSTRUCTION_INF_MAP("AND1"), "COUNT1"),  // 1 word
       MachineInstruction("JZE"  , OperandADR(LabelOfOperand("RETURN", None)), InstructionFactory.INSTRUCTION_INF_MAP("JZE"), "COUNT1"), // 2 word
-      MachineInstruction("LAD"  , OperandR_ADR_X(2, AddressOfOperand("1" , InstructionFactory.a2l(1 )), 2), InstructionFactory.INSTRUCTION_INF_MAP("LAD"), "COUNT1"), // 2 word LABEL MORE: 10
-      MachineInstruction("LAD"  , OperandR_ADR_X(0, AddressOfOperand("-1", InstructionFactory.a2l(-1)), 1), InstructionFactory.INSTRUCTION_INF_MAP("LAD"), "COUNT1"), // 2 word
+      MachineInstruction("LAD"  , OperandR_ADR_X(2, AddressOfOperand("1" , Helper.bitToUnsignedShort(1 )), 2), InstructionFactory.INSTRUCTION_INF_MAP("LAD"), "COUNT1"), // 2 word LABEL MORE: 10
+      MachineInstruction("LAD"  , OperandR_ADR_X(0, AddressOfOperand("-1", Helper.bitToUnsignedShort(-1)), 1), InstructionFactory.INSTRUCTION_INF_MAP("LAD"), "COUNT1"), // 2 word
       MachineInstruction("AND1" , OperandR1R2(1, 0), InstructionFactory.INSTRUCTION_INF_MAP("AND1"), "COUNT1"), // 1 word
       MachineInstruction("JZE"  , OperandADR(LabelOfOperand("MORE", None)), InstructionFactory.INSTRUCTION_INF_MAP("JZE"), "COUNT1"), // 2 word
       MachineInstruction("LD1"  , OperandR1R2(0, 2), InstructionFactory.INSTRUCTION_INF_MAP("LD1"), "COUNT1"),  // 1 word LABEL RETURN: 17

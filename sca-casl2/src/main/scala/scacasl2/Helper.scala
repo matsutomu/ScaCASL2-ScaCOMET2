@@ -50,4 +50,50 @@ object Helper {
   }
 
 
+  /**
+   * Bit(32bit) to Word Value(Short). Internal Type is Int, cause consider overflow
+   *
+   * (32bit is Int)
+   * 0000 0000 0000 0000 0000 0000 0000 0000 is 0
+   * 1000 0000 0000 0000 0000 0000 0000 0000 is -2,147,483,648 (0x8000 0000)
+   * 0111 1111 1111 1111 1111 1111 1111 1111 is  2,147,483,647 (0x7FFF FFFF)
+   *
+   * CASL2 & COMET2 's word is 16 bit
+   * Short(16bit)
+   * ---- ---- ---- ---- 0000 0000 0000 0000 is 0
+   * ---- ---- ---- ---- 1000 0000 0000 0000 is -32,768 (0x8000)
+   * ---- ---- ---- ---- 0000 0000 0000 0000 is  32,767 (0x7FFF)
+   *
+   * first  step : Int to Short
+   * second step : unsigned to Signed Short
+   *
+   *             0 1000 0000 0000 0000  (0x8000)
+   *           & 0 1111 1111 1111 1111  (0xFFFF)
+   *           -----------------------
+   *             0 1000 0000 0000 0000  (0x08000)
+   *           - 1 0000 0000 0000 0000  (0x10000)
+   *           -----------------------
+   *               1000 0000 0000 0000  (0x08000)
+   *
+   * @param x
+   * @return Signed Short
+   */
+  def bitToSignedShort(x: Int): Int = x & 0xffff match {
+    case y: Int if 0x0000 <= y && y <= 0x7fff => y
+    case y: Int if 0x8000 <= y && y <= 0xffff => y - 0x10000
+    case _  => throw new IllegalArgumentException
+  }
+
+
+  /**
+   * Bit(32bit) to Word Value(Short). Internal Type is Int, cause consider overflow
+   *
+   * @param x
+   * @return Unsigned Short
+   */
+  def bitToUnsignedShort(x: Int): Int = x & 0xffff match {
+    case y: Int if 0 <= y => y
+    case y                => y + 0x10000 // no case
+  }
+
 }

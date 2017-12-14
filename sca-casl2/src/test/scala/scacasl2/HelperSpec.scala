@@ -30,5 +30,21 @@ class HelperSpec extends FlatSpec with DiagrammedAssertions {
     assert(Helper.includeAddress("#")   === false)
   }
 
+  " Bit Signed/Unsigned " should " convert each oundary value" in {
+
+    assert(Helper.bitToSignedShort(0x0000)  ===      0)
+    assert(Helper.bitToSignedShort(0x7FFF)  ===  32767)
+    assert(Helper.bitToSignedShort(0x8000)  === -32768)
+    assert(Helper.bitToSignedShort(0xFFFF)  ===     -1)
+    assert(Helper.bitToSignedShort(0x10000) ===      0)
+    assert(Helper.bitToSignedShort(0x1FFFF) ===     -1)
+
+    assert(Helper.bitToUnsignedShort(0x0000)  ===      0)
+    assert(Helper.bitToUnsignedShort(0x7FFF)  ===  32767)
+    assert(Helper.bitToUnsignedShort(0x8000)  ===  32768)
+    assert(Helper.bitToUnsignedShort(0xFFFF)  ===  65535)
+    assert(Helper.bitToUnsignedShort(0x10000) ===      0)
+    assert(Helper.bitToUnsignedShort(0x1FFFF) ===  65535)
+  }
 
 }

@@ -260,37 +260,16 @@ class Machine {
   }
 
   private def getEffectiveAddress(address: Int, x: Int): Int = {
-    if (x == 0) a2l(address)
-    else a2l(address + this.generalRegisters(x).word)
+    if (x == 0) Helper.bitToUnsignedShort(address)
+    else Helper.bitToUnsignedShort(address + this.generalRegisters(x).word)
   }
 
   private def getValueEffectiveAddress(address: Int, x: Int): Int = {
     if (x == 0) this.memory(address)
-    else this.memory(a2l(address + this.generalRegisters(x).word))
+    else this.memory(Helper.bitToUnsignedShort(address + this.generalRegisters(x).word))
   }
 
-  /*
-   * #todo l2a & a2l rename and class
-   */
-  def l2a(x: Int): Int = {
-    val x_tmp = x & 0xffff
-    if (0 <= x_tmp && x_tmp <= 0x7fff) {
-      x_tmp
-    } else if (0x8000 <= x_tmp && x_tmp <= 0xffff) {
-      x_tmp - (1 << 16)
-    } else {
-      throw new IllegalAccessException()
-    }
-  }
 
-  def a2l(x: Int): Int = {
-    val x_tmp = x & 0xffff
-    if (0 <= x_tmp) {
-      x_tmp
-    } else {
-      x_tmp + (1 << 16)
-    }
-  }
 
 
   ///
@@ -422,7 +401,7 @@ class Machine {
     List(f"PR #${this.PR.word}%04X [ $disassemble%-30s ]  STEP ${this.stepCount}%d",
          f"SP #${this.SP.word}%04X(${this.SP.word}%7d) FR(OF, SF, ZF) ${this.flagLiteral}%3s  (${this.fr.word}%7d)") :::
     (this.generalRegisters.filter(p => !p.isInstanceOf[StackPointer]).zipWithIndex.map { case (e, i) =>
-      val signed = l2a(e.word)
+      val signed = Helper.bitToSignedShort(e.word)
       f"GR$i #${e.word}%04X($signed%7d)"
     }.splitAt(4) match {
       case (a, b) => List(a.mkString(" "), b.mkString(" "))
@@ -478,8 +457,8 @@ class Machine {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
-    val result = l2a(this.generalRegisters(arg.r).word) + l2a(eAdr)
-    this.generalRegisters(arg.r).word = a2l(result)
+    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r).word) + Helper.bitToSignedShort(eAdr)
+    this.generalRegisters(arg.r).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 2
 
@@ -500,8 +479,8 @@ class Machine {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
-    val result = l2a(this.generalRegisters(arg.r).word) - l2a(eAdr)
-    this.generalRegisters(arg.r).word = a2l(result)
+    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r).word) - Helper.bitToSignedShort(eAdr)
+    this.generalRegisters(arg.r).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 2
 
@@ -559,7 +538,7 @@ class Machine {
   private def compareArithmetic2 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
-    val diff = l2a(this.generalRegisters(arg.r).word) - l2a(eAdr)
+    val diff = Helper.bitToSignedShort(this.generalRegisters(arg.r).word) - Helper.bitToSignedShort(eAdr)
     this.changeFlagByCompare(diff)
     this.PR ++ 2
   }
@@ -575,9 +554,9 @@ class Machine {
 
   def addArithmetic1 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
-    val result = l2a(this.generalRegisters(arg.r1).word) + l2a(
+    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r1).word) + Helper.bitToSignedShort(
       this.generalRegisters(arg.r2).word)
-    this.generalRegisters(arg.r1).word = a2l(result)
+    this.generalRegisters(arg.r1).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 1
 
@@ -596,9 +575,9 @@ class Machine {
 
   def subArithmetic1 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
-    val result = l2a(this.generalRegisters(arg.r1).word) - l2a(
+    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper.bitToSignedShort(
       this.generalRegisters(arg.r2).word)
-    this.generalRegisters(arg.r1).word = a2l(result)
+    this.generalRegisters(arg.r1).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 1
 
@@ -653,7 +632,7 @@ class Machine {
 
   private def compareArithmetic1 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
-    val diff = l2a(this.generalRegisters(arg.r1).word) - l2a(
+    val diff = Helper.bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper.bitToSignedShort(
       this.generalRegisters(arg.r2).word)
     this.changeFlagByCompare(diff)
     this.PR ++ 1
@@ -673,7 +652,7 @@ class Machine {
 
     val v = this.getEffectiveAddress(arg.address.adrValue, arg.x)
 
-    val p = this.l2a(this.generalRegisters(arg.r).word)
+    val p = Helper.bitToSignedShort(this.generalRegisters(arg.r).word)
     val sign = this.getBit(this.generalRegisters(arg.r).word, 15)
     this.generalRegisters(arg.r).word = if (sign == 0) {
       (p << v) & 0x7FFF
@@ -699,7 +678,7 @@ class Machine {
 
     val v = this.getEffectiveAddress(arg.address.adrValue, arg.x)
 
-    val p = this.l2a(this.generalRegisters(arg.r).word)
+    val p = Helper.bitToSignedShort(this.generalRegisters(arg.r).word)
     val sign = this.getBit(this.generalRegisters(arg.r).word, 15)
     this.generalRegisters(arg.r).word = if (sign == 0) {
       (p >> v) & 0x7FFF

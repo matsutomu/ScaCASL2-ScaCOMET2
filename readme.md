@@ -6,6 +6,10 @@ CASL2 / COMET2 を Scalaで実装しました。
 以下を大変参考にさせて頂きました。
 
 [PyCASL2 & PyCOMET2 Java](https://github.com/oguna/pycasl2-pycomet2-java)
+[CASLIIアセンブラ & シミュレータ PyCASL2 & PyCOMET2](http://www.image.med.osaka-u.ac.jp/member/nakamoto/pycasl2/index.html)
+
+
+[進数変換](https://hogehoge.tk/tool/number.html)
 
 他のサイトも随時追加予定。
 
