@@ -1,5 +1,7 @@
 package scacomet2
 
+import java.io.{ByteArrayOutputStream, PrintStream, StringReader}
+
 import org.scalatest._
 
 
@@ -812,9 +814,7 @@ class MachineSpec extends FlatSpec with DiagrammedAssertions {
                  """ !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUXYZ""" + /* 79 - 21 =  58 */
                  """[¥]^_`abcdefghijklmnopqrstuxyz{|}~""" + /* 55 - 21 = 34 */
                  """ !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUXYZ""" + /* 79 - 21 =  58 */
-                 """0123456789abcde""" /* 36 - 21 = 15 */
-
-    machine.read(testIn)
+                 """0123456789abcde""" + f"%n" /* 36 - 21 = 15 */
 
     val instructions =
         List(0x0000,              // 00: NOP
@@ -846,10 +846,16 @@ class MachineSpec extends FlatSpec with DiagrammedAssertions {
         0, 0, 0, 0, 0, 0, 0, 0, 0xFF00), // RET
     )
 
-    assert(machine.ouput === "")
-
     for(e <- registers){
-      machine.step()
+      machine.PR.word match {
+        case 0x0001 => this.stepCometWithInAndOut(machine, testIn)
+        case 0x0004 => {
+          val stdout = this.stepCometWithOut(machine)
+          assert(stdout === testIn.substring(0, 256) + f"%n")
+        }
+        case _      => machine.step()
+      }
+
       assert(machine.PR.word  === e(0))
       assert(machine.OF       === e(1))
       assert(machine.SF       === e(2))
@@ -870,10 +876,31 @@ class MachineSpec extends FlatSpec with DiagrammedAssertions {
     assert(machine.memory(0x0109) === 0x0064)
     assert(machine.memory(0x010A) === 0x0100) /* Length : 256 */
 
-    assert(machine.ouput() === testIn.substring(0, 256))
 
   }
 
+  def stepCometWithOut(machine: Machine): String = {
+    val outStream = new ByteArrayOutputStream
+    val out = new PrintStream(new java.io.BufferedOutputStream(outStream), true, "utf-8")
+    Console.withOut(out) {
+      machine.step()
+      out.flush()
+      outStream.toString("utf-8")
+    }
+  }
+
+  def stepCometWithInAndOut(machine: Machine, readin: String): String = {
+    val input     = new StringReader(s"$readin")
+    val outStream = new ByteArrayOutputStream
+    val out = new PrintStream(new java.io.BufferedOutputStream(outStream), true, "utf-8")
+    Console.withIn(input){
+      Console.withOut(out) {
+        machine.step()
+        out.flush()
+        outStream.toString("utf-8")
+      }
+    }
+  }
 
 
   it should " execute Rpush/Rpop Instructions " in {

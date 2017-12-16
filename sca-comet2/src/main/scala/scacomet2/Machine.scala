@@ -818,14 +818,9 @@ class Machine {
   }
 
 
-  def read(input: String): Unit = {
-    inputString = input
-  }
-
-  private var inputString = ""
-
   def in = (ope: Operand) => {
 
+    var inputString = scala.io.StdIn.readLine()
     val startAdr = this.memory(this.PR.word + 1)
     val lengthAdr = this.memory(this.PR.word + 2)
 
@@ -843,10 +838,8 @@ class Machine {
 
   }
 
-  private var outputString = ""
-  def ouput() = outputString
-
   def out = (ope: Operand) => {
+    var outputString = ""
     val startAdr = this.memory(this.PR.word + 1)
     val lengthAdr = this.memory(this.PR.word + 2)
 
@@ -859,6 +852,7 @@ class Machine {
         throw new IllegalArgumentException(s"no good 'out' parameter(position:$i)")
       }
     }
+    println(outputString)
     this.PR ++ 3
   }
 
