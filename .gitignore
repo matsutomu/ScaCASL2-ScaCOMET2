@@ -21,8 +21,10 @@ build/target/
 standalone-build/
 
 *.pdf
+*.jar
+*.com
+*.cas
 *.ser
-*.class
 *~
 *.bak
 #*.off
@@ -71,8 +73,12 @@ ivy2
 
 node_modules
 
+# sample
+sample/jar/
+
 # ensime
 .ensime*
 .sbtconfig
 =======
 >>>>>>> origin/master
+
