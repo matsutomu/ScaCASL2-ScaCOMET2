@@ -119,7 +119,7 @@ trait Instruction {
               case e: ConstsStringOfOperand => e.array_char
           })
           .flatten
-        Array.concat(Array(info.byteCode << 8), ope.toArray)
+        ope.toArray
       }
 
       case o: OperandADR if (o.address.isInstanceOf[LabelOfOperand]) => {

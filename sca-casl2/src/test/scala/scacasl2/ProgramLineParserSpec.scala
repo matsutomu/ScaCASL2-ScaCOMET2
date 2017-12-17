@@ -452,4 +452,49 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
 
   }
+
+  it should " parse sample instructions (Simple Out) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         OUT      BUFF1, LEN",
+      "         RET",
+      "LEN      DC      5",
+      "BUFF1    DC      'CASL2'",
+      "BUFF2    DC      'COMET2'",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 5 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 6 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map(".SOUT1" -> 0, "SOUT1.LEN" -> 4, "SOUT1.BUFF1" -> 5, "SOUT1.BUFF2" -> 10)
+
+    assert(result.errors.isEmpty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+
+    val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    val rightByte = List('C', 'A',  'S', 'L',    0,    0,    0,
+         0,    0,    0,   0,    0,    0,    0,
+         0,    0, 0x91,0x00,    0, 0x05,    0,0x04,
+      0x81,    0,    0,0x05,    0,  'C',    0, 'A',
+         0,  'S',    0, 'L',    0,  '2',    0, 'C',
+         0,  'O',    0, 'M',    0,  'E',    0, 'T',  0, '2'
+    ).map(e => e.toByte)
+
+    assert(byteCode === rightByte)
+
+
+  }
 }

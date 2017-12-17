@@ -74,7 +74,9 @@ ivy2
 node_modules
 
 # sample
-sample/jar/
+sample/*.jar
+sample/*.com
+
 
 # ensime
 .ensime*

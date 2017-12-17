@@ -3,7 +3,7 @@ import sbt.Keys.{libraryDependencies, mainClass}
 import sbt._
 
 // name := "ScaCASL2-ScaCOMET2"
-// version := "0.1"
+lazy val _version = "0.1"
 // scalaVersion := "2.12.3"
 
 
@@ -14,7 +14,7 @@ lazy val push = taskKey[Unit]("push zip to S3 for CodeDeploy Test")
 // resolvers += "Artima Maven Repository" at "http://repo.artima.com/releases"
 
 lazy val commonSettings = Seq (
-  version := "1.0",
+  version := _version,
   scalaVersion := "2.12.3",
   libraryDependencies ++= Seq(
     "org.scalactic" %% "scalactic" % "3.0.1",
