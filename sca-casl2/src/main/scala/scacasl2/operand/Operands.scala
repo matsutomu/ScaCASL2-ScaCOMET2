@@ -6,6 +6,8 @@ package scacasl2.operand
   */
 trait Operand {
   def disassemble: String
+
+  def includeLabel: Boolean
 }
 
 /**
@@ -14,6 +16,8 @@ trait Operand {
   */
 case class OperandNoArg() extends Operand {
   override def disassemble: String = ""
+
+  override def includeLabel: Boolean = false
 }
 
 /**
@@ -24,6 +28,8 @@ case class OperandNoArg() extends Operand {
   */
 case class OperandR1R2(r1: Int, r2: Int) extends Operand {
   override def disassemble: String = f"GR$r1%1d, GR$r2%1d"
+
+  override def includeLabel: Boolean = false
 }
 
 /**
@@ -39,6 +45,8 @@ case class OperandR_ADR_X(r: Int, address: ElementOfAddressOperand, x: Int)
     if(x == 0) f"GR$r%1d, #${address.adrValue}%04X"
     else  f"GR$r%1d, #${address.adrValue}%04X, GR$x%1d"
   }
+
+  override def includeLabel: Boolean = address.isInstanceOf[LabelOfOperand]
 }
 
 /**
@@ -53,6 +61,9 @@ case class OperandADR_X(address: ElementOfAddressOperand, x: Int)
     if (x == 0) f"#${address.adrValue}%04X"
     else f"#${address.adrValue}%04X, GR$x%1d"
   }
+
+  override def includeLabel: Boolean = address.isInstanceOf[LabelOfOperand]
+
 }
 /**
   *  Only Address
@@ -60,9 +71,10 @@ case class OperandADR_X(address: ElementOfAddressOperand, x: Int)
   * @param address Address
   */
 case class OperandADR(address: ElementOfAddressOperand) extends Operand {
-  override def disassemble: String = {
-    f"#${address.adrValue}%04X"
-  }
+
+  override def disassemble: String   = f"#${address.adrValue}%04X"
+
+  override def includeLabel: Boolean = address.isInstanceOf[LabelOfOperand]
 }
 
 /** Register
@@ -71,6 +83,8 @@ case class OperandADR(address: ElementOfAddressOperand) extends Operand {
   */
 case class OperandR(r: Int) extends Operand {
   override def disassemble: String = f"GR$r%1d"
+
+  override def includeLabel: Boolean = false
 }
 
 /** Single Label
@@ -79,6 +93,8 @@ case class OperandR(r: Int) extends Operand {
   */
 case class OperandStart(l: Option[LabelOfOperand]) extends Operand {
   override def disassemble: String = ???
+
+  override def includeLabel: Boolean = l.isDefined
 }
 
 /** Multi Label
@@ -87,6 +103,8 @@ case class OperandStart(l: Option[LabelOfOperand]) extends Operand {
   */
 case class OperandInOrOut(ml: List[LabelOfOperand]) extends Operand {
   override def disassemble: String = ???
+
+  override def includeLabel: Boolean = true
 }
 
   /** DS Instruction use.
@@ -95,7 +113,8 @@ case class OperandInOrOut(ml: List[LabelOfOperand]) extends Operand {
   */
 case class OperandDs(decimal: Int) extends Operand {
     override def disassemble: String = ???
-  }
+    override def includeLabel: Boolean = false
+}
 
 /** DC Instruction use.
   *
@@ -103,4 +122,6 @@ case class OperandDs(decimal: Int) extends Operand {
   */
 case class OperandDc(consts: List[ElementOfDcInstruction]) extends Operand {
   override def disassemble: String = ???
+
+  override def includeLabel: Boolean = consts.exists(e => e.isInstanceOf[LabelOfOperand])
 }

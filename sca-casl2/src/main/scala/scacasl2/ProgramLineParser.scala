@@ -58,43 +58,37 @@ object ProgramLineParser extends RegexParsers {
   /***********************************
     * Parser Combinator
    ***********************************/
-  def instructions = inst_line_with_ope | inst_line_no_ope | comment_line
+  private def instructions = inst_line_with_ope | inst_line_no_ope | comment_line
 
-  def inst_line_with_ope =
-    opt(label) ~ casl_white_space ~ code ~ operands ~ opt(annotaition) ^^ {
+  private def inst_line_with_ope =
+    opt(label) ~ casl_white_space ~ code ~ operands ~ opt(annotation) ^^ {
       case lbl ~ sp1 ~ inst_code ~ opes ~ cmt =>
-        new InstructionLine(lbl,
-                            inst_code.trim,
-                            Some(opes.map(e => e.trim)),
-                            cmt,
-                            0,
-                            "")
+        InstructionLine(lbl, inst_code.trim, Some(opes.map(e => e.trim)), cmt, 0, "")
     }
 
-  def inst_line_no_ope =
-    opt(label) ~ casl_white_space ~ code ~ opt(annotaition) ^^ {
+  private def inst_line_no_ope =
+    opt(label) ~ casl_white_space ~ code ~ opt(annotation) ^^ {
       case lbl ~ sp ~ inst_code ~ cmt =>
-        new InstructionLine(lbl, inst_code, None, cmt, 0, "")
+        InstructionLine(lbl, inst_code, None, cmt, 0, "")
     }
 
-  def comment_line = opt(casl_white_space) ~> annotaition ^^ {
+  private def comment_line = opt(casl_white_space) ~> annotation ^^ {
     case cmt => CommentLine(cmt, 0, "")
   }
 
-  def label = InstructionFactory.REGEX_LABEL.r
+  private def label = InstructionFactory.REGEX_LABEL.r
 
-  def code = """[A-Z]+""".r
+  private def code = """[A-Z]+""".r
 
-  def operands = casl_white_space ~> rep(arg_pat1 <~ opt(comma))
-  def comma = ","
-  def arg_pat1 = """('.*(?<!')'.*')|([^,;]+)""".r
-  def arg_pat2 = """[^,]+""".r
+  private def operands = casl_white_space ~> rep(arg_pat1 <~ opt(comma))
+  private def comma = ","
+  private def arg_pat1 = """('.*(?<!')'.*')|([^,;]+)""".r
 
-  override val whiteSpace = """""".r
+  protected override val whiteSpace = """""".r
 
-  def casl_white_space = """\s+""".r
+  private def casl_white_space = """\s+""".r
 
-  def annotaition = """;.*$""".r
+  private def annotation = """;.*$""".r
 
   /*******************************************************************/
   /**  Parser CASL2                                                  */

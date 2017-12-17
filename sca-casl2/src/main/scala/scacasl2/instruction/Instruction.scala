@@ -31,65 +31,67 @@ trait Instruction {
   val info: InstructionInfo
   val scope: String
   val ERR_NOT_REPLACE_LABEL_ADDRESS = "LABEL not replace address"
+  val EXECUTABLE_FILE_START = Array(('C' << 8) | 'A', ('S' << 8) | 'L')
 
-  /** For DS and DC. The Word Size not fix size.
-    *
-    * @return
-    */
+  /**
+   * For DS and DC. The Word Size not fix size.
+   *
+   * @return
+   */
   def wordSize: Int = info.wordSize
 
-  /** get word array[Int]. 32bit length.
-    *
-    * @param symbolTbl for LABEL to Address
-    * @return
-    */
+  /**
+   * get word array[Int]. 32bit length.
+   *
+   * @param symbolTbl for LABEL to Address
+   * @return
+   */
   def convertToWords(symbolTbl: Map[String, Int]): Array[Int] =
+    // #todo refactor
     this.ope match {
       case o: OperandStart => {
-        //val code: Array[Int] = ("CASL".splitAt(2) match { case (ca, sl) =>
-        //                        List(ca, sl)}).map( s => s.charAt(0).toInt << 8 + s.charAt(1)).toArray
-        val code: Array[Int] =
-          Array((('C' << 8) | 'A').toInt, (('S' << 8) | 'L').toInt)
         if (o.l.isDefined) {
           symbolTbl
             .get(scope + "." + o.l.get.name)
             .map { adr_value =>
-              code ++ Array(adr_value) ++ Array.fill(5)(0)
+              this.EXECUTABLE_FILE_START ++ Array(adr_value) ++ Array.fill(5)(0)
             }
             .getOrElse(throw new IllegalArgumentException(
               ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
         } else {
-          code ++ Array.fill(6)(0)
+          this.EXECUTABLE_FILE_START ++ Array.fill(6)(0)
         }
       }
-      case o: OperandNoArg => Array(info.byteCode << 8)
-      case o: OperandR1R2 => Array(info.byteCode << 8 | (o.r1 << 4 | o.r2))
-      case o: OperandR_ADR_X if (o.address.isInstanceOf[LabelOfOperand]) => {
-        symbolTbl
-          .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
-          .map { adr_value =>
-            Array(info.byteCode << 8 | (o.r << 4 | o.x), adr_value)
-          }
-          .getOrElse(throw new IllegalArgumentException(
-            ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+      case _: OperandNoArg => Array(info.byteCode << 8)
+      case o: OperandR1R2  => Array(info.byteCode << 8 | (o.r1 << 4 | o.r2))
+      case o: OperandR_ADR_X => {
+        if(o.includeLabel){
+          symbolTbl
+            .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
+            .map { adr_value =>
+              Array(info.byteCode << 8 | (o.r << 4 | o.x), adr_value)
+            }
+            .getOrElse(throw new IllegalArgumentException(
+              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+        } else {
+          Array(info.byteCode << 8 | (o.r << 4 | o.x),
+            o.address.asInstanceOf[AddressOfOperand].value)
+        }
       }
-      case o: OperandR_ADR_X if (o.address.isInstanceOf[AddressOfOperand]) => {
-        Array(info.byteCode << 8 | (o.r << 4 | o.x),
-              o.address.asInstanceOf[AddressOfOperand].value)
-      }
-      case o: OperandR => Array(info.byteCode << 8 | o.r << 4)
-      case o: OperandADR_X if (o.address.isInstanceOf[LabelOfOperand]) => {
-        symbolTbl
-          .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
-          .map { adr_value =>
-            Array(info.byteCode << 8 | o.x, adr_value)
-          }
-          .getOrElse(throw new IllegalArgumentException(
-            ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
-      }
-      case o: OperandADR_X if (o.address.isInstanceOf[AddressOfOperand]) => {
-        Array(info.byteCode << 8 | o.x,
-              o.address.asInstanceOf[AddressOfOperand].value)
+      case o: OperandR      => Array(info.byteCode << 8 | o.r << 4)
+      case o: OperandADR_X  => {
+        if(o.includeLabel){
+          symbolTbl
+            .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
+            .map { adr_value =>
+              Array(info.byteCode << 8 | o.x, adr_value)
+            }
+            .getOrElse(throw new IllegalArgumentException(
+              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+        } else {
+          Array(info.byteCode << 8 | o.x,
+            o.address.asInstanceOf[AddressOfOperand].value)
+        }
       }
       case o: OperandInOrOut =>
         Array.concat(
@@ -105,38 +107,31 @@ trait Instruction {
           }.toArray
         )
       case o: OperandDs => Array.fill(o.decimal)(0)
-      case o: OperandDc => {
-        val ope = o.consts
-          .map(c =>
+      case o: OperandDc => o.consts.flatMap(c =>
             c match {
               case e: LabelOfOperand =>
-                List(
-                  symbolTbl.getOrElse(
-                    scope + "." + e.name,
+                List(symbolTbl.getOrElse(scope + "." + e.name,
                     throw new IllegalArgumentException(
                       ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $o)")))
               case e: ConstsNumOfOperand => List(e.value)
               case e: ConstsStringOfOperand => e.array_char
-          })
-          .flatten
-        ope.toArray
-      }
+          }).toArray
 
-      case o: OperandADR if (o.address.isInstanceOf[LabelOfOperand]) => {
-        symbolTbl
-          .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
-          .map { adr_value =>
-            Array(info.byteCode << 8 | 0, adr_value)
-          }
-          .getOrElse(throw new IllegalArgumentException(
-            ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+      case o: OperandADR => {
+        if(o.includeLabel){
+          symbolTbl
+            .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
+            .map { adr_value =>
+              Array(info.byteCode << 8 | 0, adr_value)
+            }
+            .getOrElse(throw new IllegalArgumentException(
+              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+        } else {
+          Array(info.byteCode << 8 | 0,
+            o.address.asInstanceOf[AddressOfOperand].value)
+        }
       }
-
-      case o: OperandADR if (o.address.isInstanceOf[AddressOfOperand]) => {
-        Array(info.byteCode << 8 | 0,
-              o.address.asInstanceOf[AddressOfOperand].value)
-      }
-
     }
+
 
 }
