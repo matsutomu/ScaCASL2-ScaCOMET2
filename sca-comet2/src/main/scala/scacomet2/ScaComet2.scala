@@ -250,9 +250,10 @@ object ScaComet2 {
   def waitForCommand(machine: Machine): Unit = {
 
     while(this.running){
-      println("ScaComet2>")
+      print("ScaComet2>")
       val input = scala.io.StdIn.readLine().split("""\s""")
       val optForWait = parseArgsWaitCommand(input)
+      println("")
       optForWait.command match {
         case WaitForCommand.Quit              => this.running = false
         case WaitForCommand.AddBreakPoints    => optForWait.breakPoints.foreach(machine.addBreakPoint)
