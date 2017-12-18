@@ -75,6 +75,8 @@ object InstructionFactory {
     MachineInstruction.SVC -> analyzeMachineInstruction
   )
 
+  def existsInstruction(code: String) = this.INSTRUCTION_ANALYZE_MAP.contains(code)
+
   val INSTRUCTION_INF_MAP = Map(
     /* Assembly Instructions */
     AssemblyInstruction.START -> InstructionInfo(-100, 0),

@@ -3,6 +3,7 @@ package scacasl2
 import org.scalatest._
 import scacasl2.instruction._
 import scacasl2.operand._
+import scacasl2.ProgramLineParser._
 
 
 class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
@@ -494,7 +495,51 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ).map(e => e.toByte)
 
     assert(byteCode === rightByte)
-
-
   }
+
+  it should " parse sample instructions (No Start Label) " in {
+
+    val programLines = List(
+      "         START",
+      "         OUT      BUFF1, LEN",
+      "         RET",
+      "LEN      DC      5",
+      "BUFF1    DC      'CASL2'",
+      "BUFF2    DC      'COMET2'",
+      "         END"
+    )
+
+    // #todo error is ALL ParseError
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),""), // 3 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), ""), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 5 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 6 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(ParseError(1,"START need Label","",InstructionLine(None,"START",None,None,1,"         START"))))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+
+    /* if errors invalid binary
+    val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    val rightByte = List('C', 'A',  'S', 'L',    0,    0,    0,
+      0,    0,    0,   0,    0,    0,    0,
+      0,    0, 0x91,0x00,    0, 0x05,    0,0x04,
+      0x81,    0,    0,0x05,    0,  'C',    0, 'A',
+      0,  'S',    0, 'L',    0,  '2',    0, 'C',
+      0,  'O',    0, 'M',    0,  'E',    0, 'T',  0, '2'
+    ).map(e => e.toByte)
+
+    assert(byteCode === rightByte) */
+  }
+
 }

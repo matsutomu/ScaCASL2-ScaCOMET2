@@ -161,6 +161,8 @@ object ProgramLineParser extends RegexParsers {
     */
   def parseFirst(codeLines: List[String]): ParseResult = {
 
+    // 状態保持すべき情報が多すぎる
+
     var innerResult: InnerParseResult = InnerParseResult(
       new ListBuffer,
       scala.collection.mutable.Map.empty[String, Int],
@@ -177,18 +179,20 @@ object ProgramLineParser extends RegexParsers {
 
     // parse 1
     for ((line, n) <- codeLines.zipWithIndex) {
-      val result = parseLine(line, n)
-      result match {
+      // cause n start 0
+      parseLine(line, n + 1) match {
         case Right(r) =>
-          r match {
+          r match { // Instruction or Comment
             case r: InstructionLine => {
 
+
+              // 'Equal Const' convert to 'LABEL'
               val (tmpResult, tmpOperands) = r.operands.map {
                 case e =>
                   convertForEqualConstants(innerResult, e, currentScope)
               } getOrElse (innerResult, None)
-
               innerResult = tmpResult
+
 
               val replacedInst = new InstructionLine(r.lbl,
                                                      r.code,
@@ -197,59 +201,53 @@ object ProgramLineParser extends RegexParsers {
                                                      r.line_number,
                                                      r.raw_string)
 
+
               InstructionFactory.parseOperand(
                 replacedInst.code,
                 replacedInst.operands.getOrElse(List.empty),
                 currentScope) match {
                 case Right(c) => {
+                  // Add Symbol Table
                   if (r.lbl.isDefined && innerResult.isValid) {
                     val newKey = currentScope + "." + r.lbl.get
                     innerResult.symbolTable += (newKey -> instStepCounter)
                   }
+
+                  // START Opecode
                   if (replacedInst.code == AssemblyInstruction.START) {
+                    // No Label Or exists Start
                     if (r.lbl.isEmpty) {
-                      innerResult.errors += ParseError(r.line_number,
-                                                       "START need Label",
-                                                       "",
-                                                       r)
+                      innerResult.errors += ParseError(r.line_number,"START need Label", "", r)
                       currentScope = ""
                     } else {
                       currentScope = r.lbl.get
                     }
 
                     if (startFound) {
-                      innerResult.errors += ParseError(
-                        r.line_number,
-                        "START is found before END",
-                        "",
-                        r)
+                      innerResult.errors += ParseError(r.line_number, "START is found before END", "", r)
                       currentScope = ""
                     } else {
+                      // Success
                       instStepCounter += c.wordSize
-                      innerResult.instructions += InstructionRichInfo(Some(r),
-                                                                      c)
+                      innerResult.instructions += InstructionRichInfo(Some(r), c)
                     }
+                    // flag
                     startFound = true
 
                   } else if (replacedInst.code == AssemblyInstruction.END) {
+                    // END Opecode
                     if (startFound) {
                       currentScope = ""
                       startFound = false
                     } else {
-                      innerResult.errors += ParseError(r.line_number,
-                                                       "START is not found.",
-                                                       "",
-                                                       r)
+                      innerResult.errors += ParseError(r.line_number, "START is not found.", "", r)
 
                       currentScope = ""
                     }
                   } else if (replacedInst.code == MachineInstruction.RET) {
+                    // RET
                     if (isDataExists) {
-                      innerResult.errors += ParseError(
-                        r.line_number,
-                        "Data definition in program.",
-                        "",
-                        r)
+                      innerResult.errors += ParseError(r.line_number, "Data definition in program.", "", r)
                     }
                     isDataExists = false
                     instStepCounter += c.wordSize
@@ -265,23 +263,16 @@ object ProgramLineParser extends RegexParsers {
                     innerResult.instructions += InstructionRichInfo(Some(r), c)
                   }
                 }
-                case Left(msg) =>
-                  innerResult.errors += ParseError(r.line_number, msg, "", r)
+                case Left(msg) => innerResult.errors += ParseError(r.line_number, msg, "", r)
               }
             }
-            case r: CommentLine => // nop
+            case _ : CommentLine => // nop
           }
-        case Left(msg) =>
-          innerResult.errors += ParseError(n, "parse error", "", null)
+        case Left(msg) => innerResult.errors += ParseError(n, "parse error", msg, null)
       }
     }
 
-    if (startFound) {
-      innerResult.errors += ParseError(codeLines.size,
-                                       "END is not found.",
-                                       "",
-                                       null)
-    }
+    if (startFound) innerResult.errors += ParseError(codeLines.size, "END is not found.", "", null)
 
     // append addtional DC
     (innerResult.equalReplaced, innerResult.additionalDc).zipped.map {
@@ -306,27 +297,18 @@ object ProgramLineParser extends RegexParsers {
     * @return
     */
   def parseLine(input: String, lineNo: Int): Either[String, ProgramLine] =
-    parseAll(instructions, input) match {
-      case Success(result, _) =>
-        result match {
-          case r: InstructionLine => {
-            if (InstructionFactory.INSTRUCTION_ANALYZE_MAP.contains(r.code)) {
-              Right(
-                InstructionLine(r.lbl,
-                                r.code,
-                                r.operands,
-                                r.comment,
-                                lineNo,
-                                input))
-            } else
-              Left(
-                InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE + s"(${r.code}, ${r.operands
-                  .mkString(",")})")
-          }
-          case r: CommentLine => Right(CommentLine(r.comment, lineNo, input))
-        }
+    this.parseAll(this.instructions, input) match {
+      case Success(result, _) => result match {
+        case r: CommentLine     => Right(CommentLine(r.comment, lineNo, input))
+        case r: InstructionLine =>
+          if (InstructionFactory.existsInstruction(r.code))
+            Right(InstructionLine(r.lbl, r.code, r.operands, r.comment, lineNo, input))
+          else
+            Left(InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE +
+              s"(${r.code}, ${r.operands.mkString(",")})")
+      }
       case Failure(msg, _) => Left(msg)
-      case Error(msg, _) => Left(msg)
+      case Error(msg, _)   => Left(msg)
     }
 
   /**
@@ -344,20 +326,25 @@ object ProgramLineParser extends RegexParsers {
 
     val newOperands: ListBuffer[String] = new ListBuffer
 
+    // what return ?
     operands.zipWithIndex.map {
       case (m, i) =>
         if (m.matches(reg_equal)) {
           val newLabel = s"%EQLABEL$i"
 
+          // (1) new label with scope
           innerResult.equalReplaced += currentScope + "." + newLabel
+          // (2) new label
           newOperands += newLabel
+
           InstructionFactory.parseOperand(AssemblyInstruction.DC,
                                           List(m.drop(1)),
                                           currentScope) match {
-            case Right(c) => innerResult.additionalDc += c
-            case Left(msg) => innerResult.errAdditionalDc += msg
+            case Right(c)  => innerResult.additionalDc    += c    // (3 success) additional DC
+            case Left(msg) => innerResult.errAdditionalDc += msg  // (3 fail   ) error msg
           }
         } else {
+          // (1) ordinal operand
           newOperands += m
         }
     }
