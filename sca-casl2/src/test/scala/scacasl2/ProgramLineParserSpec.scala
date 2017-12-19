@@ -497,7 +497,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     assert(byteCode === rightByte)
   }
 
-  it should " parse sample instructions (No Start Label) " in {
+  it should " parse sample instructions  ([ERROR] No Start Label) " in {
 
     val programLines = List(
       "         START",
@@ -515,7 +515,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val answer = List(
       AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
       MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),""), // 3 word
-      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), ""), // 1 word
+      MachineInstruction("RET", OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), ""), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 5 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 6 word
@@ -528,18 +528,127 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
 
-
-    /* if errors invalid binary
-    val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
-    val rightByte = List('C', 'A',  'S', 'L',    0,    0,    0,
-      0,    0,    0,   0,    0,    0,    0,
-      0,    0, 0x91,0x00,    0, 0x05,    0,0x04,
-      0x81,    0,    0,0x05,    0,  'C',    0, 'A',
-      0,  'S',    0, 'L',    0,  '2',    0, 'C',
-      0,  'O',    0, 'M',    0,  'E',    0, 'T',  0, '2'
-    ).map(e => e.toByte)
-
-    assert(byteCode === rightByte) */
   }
+
+  it should " parse sample instructions ([ERROR] START again,  before END) " in {
+
+    val programLines = List(
+      "TEST1   START",
+      "         OUT      BUFF1, LEN",
+      "TEST2   START",
+      "         RET",
+      "LEN      DC      5",
+      "BUFF1    DC      'CASL2'",
+      "BUFF2    DC      'COMET2'",
+      "         END"
+    )
+
+    // #todo error is ALL ParseError
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"TEST1"), // 3 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), ""), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 5 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 6 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(ParseError(3,"START is found before END","",InstructionLine(Some("TEST2"),"START",None,None,3,"TEST2   START"))))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+  }
+
+
+  it should " parse sample instructions ([ERROR] START is not there,  before END) " in {
+
+    val programLines = List(
+      "         OUT      BUFF1, LEN",
+      "         END"
+    )
+
+    // #todo error is ALL ParseError
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),""), // 3 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(ParseError(2,"START is not found.","",InstructionLine(None,"END",None,None,2,"         END"))))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+  }
+
+  it should " parse sample instructions ([ERROR] data definition in program) " in {
+
+    val programLines = List(
+      "TEST1   START",
+      "         OUT      BUFF1, LEN",
+      "LEN      DC      5",
+      "         RET",
+      "BUFF1    DC      'CASL2'",
+      "BUFF2    DC      'COMET2'",
+      "         END"
+    )
+
+    // #todo error is ALL ParseError
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"TEST1"), // 3 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"TEST1"), // 1 word
+      MachineInstruction("RET", OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "TEST1"), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"TEST1"), // 5 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"TEST1"), // 6 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(ParseError(4,"Data definition in program.","",InstructionLine(None,"RET",None,None,4,"         RET"))))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+  }
+
+
+  it should " parse sample instructions ([ERROR] error grammer) " in {
+
+    val programLines = List(
+      " SOUT    START",
+      "OUT      BUFF1, LEN",
+      "RET",
+      " LEN      DC      5",
+      " BUFF1    DC      'CASL2'",
+      " BUFF2    DC      'COMET2'",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List()
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(
+      ParseError(1,"parse error","Unsupported Instruction(SOUT, List(START))",null),
+      ParseError(2,"parse error","string matching regex `;.*$' expected but `1' found",null),
+      ParseError(3,"parse error","""string matching regex `\s+' expected but end of source found""",null),
+      ParseError(4,"parse error","Unsupported Instruction(LEN, List(DC      5))",null),
+      ParseError(5,"parse error","string matching regex `;.*$' expected but `1' found",null),
+      ParseError(6,"parse error","string matching regex `;.*$' expected but `2' found",null),
+      ParseError(7,"START is not found.","",InstructionLine(None,"END",None,None,7,"         END"))))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+  }
+
 
 }

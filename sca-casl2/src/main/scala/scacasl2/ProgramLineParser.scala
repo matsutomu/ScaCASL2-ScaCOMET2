@@ -116,11 +116,8 @@ object ProgramLineParser extends RegexParsers {
       this.errAdditionalDc.isEmpty & this.errors.isEmpty
     }
 
-    def parseResult = {
-      ParseResult(this.instructions.toList,
-                  this.symbolTable.toMap,
-                  this.errors.toList)
-    }
+    def parseResult = if(this.isValid) ParseResult(this.instructions.toList, this.symbolTable.toMap, this.errors.toList)
+    else ParseResult(this.instructions.toList, Map.empty, this.errors.toList)
 
   }
 
@@ -268,7 +265,7 @@ object ProgramLineParser extends RegexParsers {
             }
             case _ : CommentLine => // nop
           }
-        case Left(msg) => innerResult.errors += ParseError(n, "parse error", msg, null)
+        case Left(msg) => innerResult.errors += ParseError(n + 1, "parse error", msg, null)
       }
     }
 
