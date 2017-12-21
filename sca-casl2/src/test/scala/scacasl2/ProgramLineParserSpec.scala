@@ -42,7 +42,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL PRINT MAIN", 1) match {
       case Right(result) => throw new RuntimeException
       case Left(msg) => {
-        assert(msg === "Unsupported Instruction(PRINT, List(MAIN))")
+        assert(msg === "Unsupported Instruction(PRINT, MAIN)")
       }
     }
 
@@ -432,7 +432,6 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
     val answerSymbols = Map(".COUNT1" -> 0, "COUNT1.MORE" -> 8, "COUNT1.RETURN" -> 15)
 
-
     assert(result.errors.isEmpty)
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
@@ -549,6 +548,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val answer = List(
       AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
       MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"TEST1"), // 3 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "TEST1"),  // 0 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), ""), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),""), // 5 word
@@ -638,10 +638,10 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val answerSymbols = Map()
 
     assert(result.errors === List(
-      ParseError(1,"parse error","Unsupported Instruction(SOUT, List(START))",null),
+      ParseError(1,"parse error","Unsupported Instruction(SOUT, START)",null),
       ParseError(2,"parse error","string matching regex `;.*$' expected but `1' found",null),
       ParseError(3,"parse error","""string matching regex `\s+' expected but end of source found""",null),
-      ParseError(4,"parse error","Unsupported Instruction(LEN, List(DC      5))",null),
+      ParseError(4,"parse error","Unsupported Instruction(LEN, DC      5)",null),
       ParseError(5,"parse error","string matching regex `;.*$' expected but `1' found",null),
       ParseError(6,"parse error","string matching regex `;.*$' expected but `2' found",null),
       ParseError(7,"START is not found.","",InstructionLine(None,"END",None,None,7,"         END"))))

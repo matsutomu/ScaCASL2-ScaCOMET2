@@ -3,6 +3,7 @@ package scacasl2
 import instruction._
 
 import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{Map => MutableMap}
 import scala.util.parsing.combinator._
 
 /**
@@ -96,28 +97,29 @@ object ProgramLineParser extends RegexParsers {
   /**                                                                */
   /*******************************************************************/
   /**
-    *  Parse Result for PyCasl2
+    *  Parse Result State for PyCasl2
     *
     * @param instructions
     * @param symbolTable
     * @param errors
     * @param additionalDc
-    * @param equalReplaced
     * @param errAdditionalDc
     */
-  private case class InnerParseResult(
-      instructions: scala.collection.mutable.ListBuffer[InstructionRichInfo],
-      symbolTable: scala.collection.mutable.Map[String, Int],
-      errors: scala.collection.mutable.ListBuffer[ParseError],
-      additionalDc: ListBuffer[Instruction],
-      equalReplaced: ListBuffer[String],
-      errAdditionalDc: ListBuffer[String]) {
-    def isValid = {
-      this.errAdditionalDc.isEmpty & this.errors.isEmpty
-    }
+  private case class InnerParseResult(lineNumber: Int,
+                                      instructions:  List[InstructionRichInfo],
+                                      symbolTable:   Map[String, Int],
+                                      errors:        List[ParseError],
+                                      additionalDc:  List[AdditionalDc],
+                                      errAdditionalDc: List[String],
+                                      startFound:   Boolean = false,
+                                      isDataExists: Boolean = false,
+                                      currentScope: String,
+                                      instStepCounter: Int) {
 
-    def parseResult = if(this.isValid) ParseResult(this.instructions.toList, this.symbolTable.toMap, this.errors.toList)
-    else ParseResult(this.instructions.toList, Map.empty, this.errors.toList)
+    def isValid = this.errAdditionalDc.isEmpty & this.errors.isEmpty
+
+    def parseResult = if(this.isValid) ParseResult(this.instructions.reverse, this.symbolTable, this.errors.reverse)
+    else ParseResult(this.instructions.reverse, Map.empty, this.errors.reverse)
 
   }
 
@@ -131,15 +133,10 @@ object ProgramLineParser extends RegexParsers {
   case class ParseResult(instructions: List[InstructionRichInfo],
                          symbolTable: Map[String, Int],
                          errors: List[ParseError]) {
-    def isValid = {
-      this.errors.isEmpty
-    }
+    def isValid = this.errors.isEmpty
 
-    def instructionModels = {
-      instructions.map { e =>
-        e.model
-      }
-    }
+    def instructionModels = instructions.map { _.model }
+
   }
 
   case class InstructionRichInfo(line: Option[InstructionLine],
@@ -150,6 +147,8 @@ object ProgramLineParser extends RegexParsers {
                         detailMsg: String,
                         line: ProgramLine)
 
+  case class AdditionalDc(label: String, instruction: Instruction)
+
   /**
     * Parse Lines
     *
@@ -158,132 +157,128 @@ object ProgramLineParser extends RegexParsers {
     */
   def parseFirst(codeLines: List[String]): ParseResult = {
 
-    // 状態保持すべき情報が多すぎる
+    val innerResult: InnerParseResult =
+      InnerParseResult(1, List.empty[InstructionRichInfo], Map.empty[String, Int], List.empty[ParseError],
+        List.empty[AdditionalDc], List.empty[String], startFound = false, isDataExists = false, "", 0)
 
-    var innerResult: InnerParseResult = InnerParseResult(
-      new ListBuffer,
-      scala.collection.mutable.Map.empty[String, Int],
-      new ListBuffer,
-      new ListBuffer,
-      new ListBuffer,
-      new ListBuffer
-    )
+    def parseEachLine(innerResult: InnerParseResult, line: ProgramLine): InnerParseResult = {
+      line match {
+        case _: CommentLine => innerResult.copy(lineNumber = innerResult.lineNumber + 1)
+        case r: InstructionLine => {
+          // 'Equal Const' convert to 'LABEL'
+          // get
+          //    - InnerResult (Addition DC Changed)
+          //    - ConvertInstructionLine (Const to Label)
+          val (tmpResult, tmpOperands) = r.operands.map {
+            case e => convertForEqualConstants(innerResult, e, innerResult.currentScope)
+          } getOrElse (innerResult, None)
 
-    var startFound = false
-    var isDataExists = false
-    var currentScope = ""
-    var instStepCounter = 0
+          InstructionFactory.parseOperand(r.code, tmpOperands.getOrElse(List.empty), tmpResult.currentScope) match {
+            case Right(c) => {
+              // Add Symbol Table
+              val newSymbol = if (r.lbl.isDefined && tmpResult.isValid)
+                Some(Map(tmpResult.currentScope + "." + r.lbl.get -> tmpResult.instStepCounter))
+              else None
 
-    // parse 1
-    for ((line, n) <- codeLines.zipWithIndex) {
-      // cause n start 0
-      parseLine(line, n + 1) match {
-        case Right(r) =>
-          r match { // Instruction or Comment
-            case r: InstructionLine => {
-
-
-              // 'Equal Const' convert to 'LABEL'
-              val (tmpResult, tmpOperands) = r.operands.map {
-                case e =>
-                  convertForEqualConstants(innerResult, e, currentScope)
-              } getOrElse (innerResult, None)
-              innerResult = tmpResult
-
-
-              val replacedInst = new InstructionLine(r.lbl,
-                                                     r.code,
-                                                     tmpOperands,
-                                                     r.comment,
-                                                     r.line_number,
-                                                     r.raw_string)
-
-
-              InstructionFactory.parseOperand(
-                replacedInst.code,
-                replacedInst.operands.getOrElse(List.empty),
-                currentScope) match {
-                case Right(c) => {
-                  // Add Symbol Table
-                  if (r.lbl.isDefined && innerResult.isValid) {
-                    val newKey = currentScope + "." + r.lbl.get
-                    innerResult.symbolTable += (newKey -> instStepCounter)
-                  }
-
-                  // START Opecode
-                  if (replacedInst.code == AssemblyInstruction.START) {
-                    // No Label Or exists Start
-                    if (r.lbl.isEmpty) {
-                      innerResult.errors += ParseError(r.line_number,"START need Label", "", r)
-                      currentScope = ""
-                    } else {
-                      currentScope = r.lbl.get
-                    }
-
-                    if (startFound) {
-                      innerResult.errors += ParseError(r.line_number, "START is found before END", "", r)
-                      currentScope = ""
-                    } else {
-                      // Success
-                      instStepCounter += c.wordSize
-                      innerResult.instructions += InstructionRichInfo(Some(r), c)
-                    }
-                    // flag
-                    startFound = true
-
-                  } else if (replacedInst.code == AssemblyInstruction.END) {
-                    // END Opecode
-                    if (startFound) {
-                      currentScope = ""
-                      startFound = false
-                    } else {
-                      innerResult.errors += ParseError(r.line_number, "START is not found.", "", r)
-
-                      currentScope = ""
-                    }
-                  } else if (replacedInst.code == MachineInstruction.RET) {
-                    // RET
-                    if (isDataExists) {
-                      innerResult.errors += ParseError(r.line_number, "Data definition in program.", "", r)
-                    }
-                    isDataExists = false
-                    instStepCounter += c.wordSize
-                    innerResult.instructions += InstructionRichInfo(Some(r), c)
-
-                  } else if (replacedInst.code == AssemblyInstruction.DS ||
-                             replacedInst.code == AssemblyInstruction.DC) {
-                    isDataExists = true
-                    instStepCounter += c.wordSize
-                    innerResult.instructions += InstructionRichInfo(Some(r), c)
-                  } else {
-                    instStepCounter += c.wordSize
-                    innerResult.instructions += InstructionRichInfo(Some(r), c)
-                  }
+              // START Opecode
+              if (r.code == AssemblyInstruction.START) {
+                // No Label Or exists Start
+                val parseError = if (r.lbl.isEmpty) {
+                  Some(ParseError(r.line_number,"START need Label", "", r))
+                } else if (tmpResult.startFound) {
+                  Some(ParseError(r.line_number, "START is found before END", "", r))
+                } else {
+                  None
                 }
-                case Left(msg) => innerResult.errors += ParseError(r.line_number, msg, "", r)
+
+                tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
+                  instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
+                  symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
+                  currentScope = if(parseError.isDefined) "" else r.lbl.get ,
+                  instStepCounter = tmpResult.instStepCounter + c.wordSize,
+                  errors = if(parseError.isDefined) parseError.get :: tmpResult.errors else tmpResult.errors,
+                  startFound = true
+                )
+
+              } else if (r.code == AssemblyInstruction.END) {
+                // END Opecode
+                val parseError = if (!tmpResult.startFound) {
+                  Some(ParseError(r.line_number, "START is not found.", "", r))
+                } else {
+                  None
+                }
+
+                // instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
+                tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
+                    symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
+                    currentScope = "",
+                    instStepCounter = tmpResult.instStepCounter + c.wordSize,
+                    errors = if(parseError.isDefined) parseError.get :: tmpResult.errors else tmpResult.errors,
+                    startFound = false
+                )
+
+
+              } else if (r.code == MachineInstruction.RET) {
+                // RET
+                val parseError = if (tmpResult.isDataExists)
+                  Some(ParseError(r.line_number, "Data definition in program.", "", r))
+                else None
+
+                tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
+                  instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
+                  symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
+                  instStepCounter = tmpResult.instStepCounter + c.wordSize,
+                  errors = if(parseError.isDefined) parseError.get :: tmpResult.errors else tmpResult.errors,
+                  isDataExists = false
+                )
+
+              } else if (r.code == AssemblyInstruction.DS || r.code == AssemblyInstruction.DC) {
+                tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
+                  instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
+                  symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
+                  instStepCounter = tmpResult.instStepCounter + c.wordSize,
+                  isDataExists = true
+                )
+
+              } else {
+                tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
+                  instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
+                  symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
+                  instStepCounter = tmpResult.instStepCounter + c.wordSize,
+                )
               }
             }
-            case _ : CommentLine => // nop
+            case Left(msg) => innerResult.copy(lineNumber = innerResult.lineNumber + 1,
+                errors = ParseError(r.line_number, msg, "", r) :: tmpResult.errors
+              )
           }
-        case Left(msg) => innerResult.errors += ParseError(n + 1, "parse error", msg, null)
+        }
       }
     }
 
-    if (startFound) innerResult.errors += ParseError(codeLines.size, "END is not found.", "", null)
-
-    // append addtional DC
-    (innerResult.equalReplaced, innerResult.additionalDc).zipped.map {
-      (dcLabel, e) =>
-        if (innerResult.isValid) {
-          innerResult.symbolTable += (dcLabel -> instStepCounter)
-        }
-        instStepCounter += e.wordSize
-        innerResult.instructions += InstructionRichInfo(None, e)
+    val finalInnerResult = codeLines.foldLeft(innerResult) { (result, line) =>
+      this.parseLine(line, result.lineNumber) match {
+        case Right(r) =>  parseEachLine(result, r)
+        case Left(msg) =>
+          result.copy(lineNumber = result.lineNumber + 1,
+            errors = ParseError(result.lineNumber, "parse error", msg, null) :: result.errors)
+      }
     }
 
-    // return
-    innerResult.parseResult
+    val finalInnerResult2 = if (finalInnerResult.startFound)
+      finalInnerResult.copy(errors = ParseError(finalInnerResult.lineNumber, "END is not found.", "", null) :: finalInnerResult.errors)
+    else finalInnerResult
 
+    // append addtional DC
+    if(finalInnerResult2.additionalDc.size == 0) finalInnerResult2.parseResult
+    else {
+      val a = finalInnerResult2.additionalDc.map(add => add.label -> add.instruction.wordSize).toMap
+      finalInnerResult2.copy(
+        symbolTable = a ++ finalInnerResult2.symbolTable,
+        instStepCounter = finalInnerResult2.instStepCounter + finalInnerResult2.additionalDc.foldLeft(0)((i, add) => i + add.instruction.wordSize),
+        instructions = finalInnerResult2.additionalDc.map(e => InstructionRichInfo(None, e.instruction)) ::: finalInnerResult2.instructions,
+      ).parseResult
+    }
   }
 
   /**
@@ -302,7 +297,7 @@ object ProgramLineParser extends RegexParsers {
             Right(InstructionLine(r.lbl, r.code, r.operands, r.comment, lineNo, input))
           else
             Left(InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE +
-              s"(${r.code}, ${r.operands.mkString(",")})")
+              s"(${r.code}, ${r.operands.getOrElse(List.empty).mkString(",")})")
       }
       case Failure(msg, _) => Left(msg)
       case Error(msg, _)   => Left(msg)
@@ -318,10 +313,12 @@ object ProgramLineParser extends RegexParsers {
     */
   private def convertForEqualConstants(innerResult: InnerParseResult,
                                        operands: List[String],
-                                       currentScope: String) = {
+                                       currentScope: String): (InnerParseResult, Some[List[String]]) = {
     val reg_equal = "=-?[0-9]+|=#[0-9A-Fa-f]{4}|='[^¥s]+'"
 
     val newOperands: ListBuffer[String] = new ListBuffer
+    val tempDc: ListBuffer[AdditionalDc] = new ListBuffer
+    val errMsg: ListBuffer[String] = new ListBuffer
 
     // what return ?
     operands.zipWithIndex.map {
@@ -329,24 +326,21 @@ object ProgramLineParser extends RegexParsers {
         if (m.matches(reg_equal)) {
           val newLabel = s"%EQLABEL$i"
 
-          // (1) new label with scope
-          innerResult.equalReplaced += currentScope + "." + newLabel
-          // (2) new label
           newOperands += newLabel
-
           InstructionFactory.parseOperand(AssemblyInstruction.DC,
                                           List(m.drop(1)),
                                           currentScope) match {
-            case Right(c)  => innerResult.additionalDc    += c    // (3 success) additional DC
-            case Left(msg) => innerResult.errAdditionalDc += msg  // (3 fail   ) error msg
+            case Right(c)  => tempDc += AdditionalDc(currentScope + "." + newLabel, c)
+            case Left(msg) => errMsg += msg
           }
         } else {
-          // (1) ordinal operand
           newOperands += m
         }
     }
 
-    (innerResult, Some(newOperands.toList))
+    (innerResult.copy(additionalDc = tempDc.toList ::: innerResult.additionalDc,
+      errAdditionalDc = errMsg.toList ::: innerResult.errAdditionalDc),
+      Some(newOperands.toList))
   }
 
   /**
