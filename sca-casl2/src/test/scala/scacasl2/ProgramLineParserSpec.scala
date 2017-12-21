@@ -579,6 +579,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
       //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
     )
 
+
     val answerSymbols = Map()
 
     assert(result.errors === List(ParseError(2,"START is not found.","",InstructionLine(None,"END",None,None,2,"         END"))))

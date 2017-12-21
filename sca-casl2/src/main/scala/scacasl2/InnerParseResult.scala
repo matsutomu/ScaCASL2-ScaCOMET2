@@ -1,6 +1,7 @@
 package scacasl2
 
 import scacasl2.instruction._
+
 import scala.collection.mutable.ListBuffer
 
 private[scacasl2] case class InnerParseResult(lineNumber: Int,
@@ -15,93 +16,74 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
                                               instStepCounter: Int) {
 
 
-  def isValid: Boolean = this.errAdditionalDc.isEmpty & this.errors.isEmpty
+  /**
+   * Good Parse Result
+   *
+   * @return
+   */
+  def isValid: Boolean = this.errors.isEmpty && this.errAdditionalDc.isEmpty
 
 
+  /**
+   * Parse Line and Results convert InnerParseResult(this)
+   *
+   * @param line is ProgramLine
+   * @return
+   */
   def parseEachLine(line: ProgramLine): InnerParseResult = line match {
     case _: CommentLine     => this.copy(lineNumber = this.lineNumber + 1)
     case r: InstructionLine => {
-      // 'Equal Const' convert to 'LABEL'
-      // get
-      //    - InnerResult (Addition DC Changed)
-      //    - ConvertInstructionLine (Const to Label)
+
       val (tmpResult, tmpOperands) = r.operands.map {
         this.convertForEqualConstants(_, this.currentScope)
-      } getOrElse (this.copy(), None)
+      } getOrElse(this.copy(), None)
 
       InstructionFactory.parseOperand(r.code, tmpOperands.getOrElse(List.empty), tmpResult.currentScope) match {
         case Right(c) => {
-          // Add Symbol Table
-          val newSymbol = if (r.lbl.isDefined && tmpResult.isValid)
-            Some(Map(tmpResult.currentScope + "." + r.lbl.get -> tmpResult.instStepCounter))
-          else None
+          val newSymbol = this.createNewSymbol(r)
 
-          // START Opecode
-          if (r.code == AssemblyInstruction.START) {
-            // No Label Or exists Start
-            val parseError = if (r.lbl.isEmpty) {
-              Some(ParseError(r.line_number,"START need Label", "", r))
-            } else if (tmpResult.startFound) {
-              Some(ParseError(r.line_number, "START is found before END", "", r))
-            } else {
-              None
+          r.code match {
+            case AssemblyInstruction.START => {
+              // No Label Or exists Start
+              if (r.lbl.isEmpty) {
+                this.createInnerResult(r, Some(c), newSymbol, None,
+                  Some(ParseError(r.line_number, "START need Label", "", r)), startFound = true, tmpResult.isDataExists)
+
+              } else if (tmpResult.startFound) {
+                this.createInnerResult(r, Some(c), newSymbol, None,
+                  Some(ParseError(r.line_number, "START is found before END", "", r)), startFound = true, tmpResult.isDataExists)
+              } else {
+                this.createInnerResult(r, Some(c), newSymbol, r.lbl,
+                  None, startFound = true, tmpResult.isDataExists)
+              }
             }
 
-            tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
-              instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
-              symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
-              currentScope = if(parseError.isDefined) "" else r.lbl.get ,
-              instStepCounter = tmpResult.instStepCounter + c.wordSize,
-              errors = if(parseError.isDefined) parseError.get :: tmpResult.errors else tmpResult.errors,
-              startFound = true
-            )
+            case AssemblyInstruction.END if !tmpResult.startFound =>
+              this.createInnerResult(r, None, newSymbol, None,
+                Some(ParseError(r.line_number, "START is not found.", "", r)), startFound = false, tmpResult.isDataExists)
 
-          } else if (r.code == AssemblyInstruction.END) {
-            // END Opecode
-            val parseError = if (!tmpResult.startFound) {
-              Some(ParseError(r.line_number, "START is not found.", "", r))
-            } else {
-              None
-            }
+            case AssemblyInstruction.END =>
+              this.createInnerResult(r, None, newSymbol, None, None, startFound = false, this.isDataExists)
 
-            // instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
-            tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
-              symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
-              currentScope = "",
-              instStepCounter = tmpResult.instStepCounter + c.wordSize,
-              errors = if(parseError.isDefined) parseError.get :: tmpResult.errors else tmpResult.errors,
-              startFound = false
-            )
+            case MachineInstruction.RET  if tmpResult.isDataExists =>
+              this.createInnerResult(r, Some(c), newSymbol, Some(tmpResult.currentScope),
+                Some(ParseError(r.line_number, "Data definition in program.", "", r)), tmpResult.startFound, isDataExists = false)
 
+            case MachineInstruction.RET =>
+              this.createInnerResult(r, Some(c), newSymbol, Some(tmpResult.currentScope), None, tmpResult.startFound, isDataExists = false)
 
-          } else if (r.code == MachineInstruction.RET) {
-            // RET
-            val parseError = if (tmpResult.isDataExists)
-              Some(ParseError(r.line_number, "Data definition in program.", "", r))
-            else None
+            case AssemblyInstruction.DS =>
+              this.createInnerResult(r, Some(c), newSymbol, Some(tmpResult.currentScope), None,
+                tmpResult.startFound, isDataExists = true)
 
-            tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
-              instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
-              symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
-              instStepCounter = tmpResult.instStepCounter + c.wordSize,
-              errors = if(parseError.isDefined) parseError.get :: tmpResult.errors else tmpResult.errors,
-              isDataExists = false
-            )
+            case AssemblyInstruction.DC=>
+              this.createInnerResult(r, Some(c), newSymbol, Some(tmpResult.currentScope), None,
+                tmpResult.startFound, isDataExists = true)
 
-          } else if (r.code == AssemblyInstruction.DS || r.code == AssemblyInstruction.DC) {
-            tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
-              instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
-              symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
-              instStepCounter = tmpResult.instStepCounter + c.wordSize,
-              isDataExists = true
-            )
+            case _ =>
+              this.createInnerResult(r, Some(c), newSymbol, Some(tmpResult.currentScope), None,
+                tmpResult.startFound, tmpResult.isDataExists)
 
-          } else {
-            tmpResult.copy(lineNumber = tmpResult.lineNumber + 1,
-              instructions = InstructionRichInfo(Some(r), c) :: tmpResult.instructions,
-              symbolTable =  if(newSymbol.isDefined) newSymbol.get ++ tmpResult.symbolTable else tmpResult.symbolTable,
-              instStepCounter = tmpResult.instStepCounter + c.wordSize,
-            )
           }
         }
         case Left(msg) => this.appendError(msg, "")
@@ -134,7 +116,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
           InstructionFactory.parseOperand(AssemblyInstruction.DC,
             List(m.drop(1)),
             currentScope) match {
-            case Right(c)  => tempDc += AdditionalDc(currentScope + "." + newLabel, c)
+            case Right(c) => tempDc += AdditionalDc(currentScope + "." + newLabel, c)
             case Left(msg) => errMsg += msg
           }
         } else {
@@ -142,10 +124,36 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
         }
     }
 
-    (this.copy(additionalDc    = tempDc.toList ::: this.additionalDc,
-               errAdditionalDc = errMsg.toList ::: this.errAdditionalDc),
+    (this.copy(additionalDc = tempDc.toList ::: this.additionalDc,
+      errAdditionalDc = errMsg.toList ::: this.errAdditionalDc),
       Some(newOperands.toList))
   }
+
+  private def createNewSymbol(instructionLine: InstructionLine): Option[Map[String, Int]] = {
+    if (instructionLine.lbl.isDefined && this.isValid)
+      Some(Map(this.currentScope + "." + instructionLine.lbl.get -> this.instStepCounter))
+    else None
+  }
+
+  private def createInnerResult(instructionLine: InstructionLine,
+                                instruction: Option[Instruction],
+                                newSymbol:   Option[Map[String, Int]],
+                                scope: Option[String],
+                                parseError:  Option[ParseError],
+                                startFound: Boolean,
+                                isDataExists: Boolean): InnerParseResult = {
+    this.copy(lineNumber = this.lineNumber + 1,
+      instructions  = if(instruction.isDefined) InstructionRichInfo(Some(instructionLine), instruction.get) :: this.instructions else this.instructions,
+      symbolTable   = if(newSymbol.isDefined) newSymbol.get ++ this.symbolTable else this.symbolTable,
+      currentScope  = if(scope.isDefined) scope.get else "",
+      instStepCounter = if(instruction.isDefined) this.instStepCounter + instruction.get.wordSize else this.instStepCounter,
+      errors = if (parseError.isDefined) parseError.get :: this.errors else this.errors,
+      startFound = startFound,
+      isDataExists = isDataExists
+    )
+
+  }
+
 
   def appendError(title: String, message: String): InnerParseResult =
     this.copy(lineNumber = this.lineNumber + 1,
