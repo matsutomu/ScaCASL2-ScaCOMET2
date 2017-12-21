@@ -401,7 +401,7 @@ object InstructionFactory {
         ConstsNumOfOperand(const,
                            java.lang.Integer.parseInt(const.drop(1), 16))
       } else if (const.startsWith("'") && const.endsWith("'")) {
-        if (const.size > DC_STRING_MAX_LENGTH)
+        if (const.length > DC_STRING_MAX_LENGTH)
           IncorrectDescription(const)
         else
           ConstsStringOfOperand(const,

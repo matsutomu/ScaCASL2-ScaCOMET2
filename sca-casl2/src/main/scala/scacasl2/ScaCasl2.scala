@@ -172,7 +172,7 @@ object ScaCasl2 {
     * @param symbolTbl
     * @return
     */
-  def dump(instructions: List[ProgramLineParser.InstructionRichInfo],
+  def dump(instructions: List[InstructionRichInfo],
            symbolTbl: Map[String, Int]) = {
     var tmpList: ListBuffer[String] = new ListBuffer[String]
     var addr = 0
