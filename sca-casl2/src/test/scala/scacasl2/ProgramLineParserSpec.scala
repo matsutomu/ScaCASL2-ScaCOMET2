@@ -617,6 +617,37 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     assert(result.symbolTable  === answerSymbols)
   }
 
+  it should " parse sample instructions (CASL2 need END LINE) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         OUT      BUFF1, LEN",
+      "         RET",
+      "LEN      DC      5",
+      "BUFF1    DC      'CASL2'",
+      "BUFF2    DC      'COMET2'"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 5 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 6 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(ParseError(7,"END is not found.","","")))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+
+  }
 
   it should " parse sample instructions ([ERROR] error grammer) " in {
 
@@ -717,6 +748,45 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     assert(result.errors === List(ParseError(2, "No Good Operands(OUT, =5I545,EL2C2)","","         OUT     =5I545, =5")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
+
+  }
+
+  it should " parse sample instructions (DS) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         RET",
+      "BUFF1    DS  0",
+      "BUFF2    DS  5",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+      AssemblyInstruction("DS",  OperandDs(0) , InstructionFactory.INSTRUCTION_INF_MAP("DS"),"SOUT1"), // 0 word
+      AssemblyInstruction("DS",  OperandDs(5) , InstructionFactory.INSTRUCTION_INF_MAP("DS"),"SOUT1"), // 5 word
+    )
+
+    val answerSymbols = Map(".SOUT1" -> 0, "SOUT1.BUFF1" -> 1, "SOUT1.BUFF2" -> 1)
+
+    assert(result.errors.isEmpty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+    val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    val rightByte = List('C', 'A',  'S', 'L',    0,    0,    0,   0,   0,    0,   0,    0,    0, 0,    0,   0,
+      0x81, 0,
+      0   , 0,
+      0   , 0,
+      0   , 0,
+      0   , 0,
+      0   , 0
+    ).map(e => e.toByte)
+
+
+    assert(byteCode === rightByte)
 
   }
 

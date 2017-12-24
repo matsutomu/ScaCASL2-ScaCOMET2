@@ -221,7 +221,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
    */
   def checkLast(): InnerParseResult = {
     if (this.startFound)
-      this.copy(errors = ParseError(this.lineNumber, "END is not found.", "", null) :: this.errors)
+      this.copy(errors = ParseError(this.lineNumber, "END is not found.", "", "") :: this.errors)
     else this.copy()
   }
 
