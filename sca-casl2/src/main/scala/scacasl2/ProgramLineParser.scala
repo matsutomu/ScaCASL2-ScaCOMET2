@@ -105,7 +105,7 @@ object ProgramLineParser extends RegexParsers {
     codeLines.foldLeft(InnerParseResult.default()) { (result, line) =>
       this.parseLine(line, result.lineNumber) match {
         case Right(r)  => result.parseEachLine(r)
-        case Left(msg) => result.appendError("parse error", msg)
+        case Left(msg) => result.appendError("parse error", msg, line)
       }
     }.checkLast()
       .convertCaslParseResult()

@@ -521,7 +521,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
     val answerSymbols = Map()
 
-    assert(result.errors === List(ParseError(1,"START need Label","",InstructionLine(None,"START",None,None,1,"         START"))))
+    assert(result.errors === List(ParseError(1,"START need Label","","         START")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
 
@@ -556,7 +556,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
     val answerSymbols = Map()
 
-    assert(result.errors === List(ParseError(3,"START is found before END","",InstructionLine(Some("TEST2"),"START",None,None,3,"TEST2   START"))))
+    assert(result.errors === List(ParseError(3,"START is found before END","","TEST2   START")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
   }
@@ -580,7 +580,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
     val answerSymbols = Map()
 
-    assert(result.errors === List(ParseError(2,"START is not found.","",InstructionLine(None,"END",None,None,2,"         END"))))
+    assert(result.errors === List(ParseError(2,"START is not found.","","         END")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
   }
@@ -612,7 +612,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
     val answerSymbols = Map()
 
-    assert(result.errors === List(ParseError(4,"Data definition in program.","",InstructionLine(None,"RET",None,None,4,"         RET"))))
+    assert(result.errors === List(ParseError(4,"Data definition in program.","","         RET")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
   }
@@ -637,13 +637,13 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val answerSymbols = Map()
 
     assert(result.errors === List(
-      ParseError(1,"parse error","Unsupported Instruction(SOUT, START)",null),
-      ParseError(2,"parse error","string matching regex `;.*$' expected but `1' found",null),
-      ParseError(3,"parse error","""string matching regex `\s+' expected but end of source found""",null),
-      ParseError(4,"parse error","Unsupported Instruction(LEN, DC      5)",null),
-      ParseError(5,"parse error","string matching regex `;.*$' expected but `1' found",null),
-      ParseError(6,"parse error","string matching regex `;.*$' expected but `2' found",null),
-      ParseError(7,"START is not found.","",InstructionLine(None,"END",None,None,7,"         END"))))
+      ParseError(1,"parse error","Unsupported Instruction(SOUT, START)", " SOUT    START"),
+      ParseError(2,"parse error","string matching regex `;.*$' expected but `1' found","OUT      BUFF1, LEN"),
+      ParseError(3,"parse error","""string matching regex `\s+' expected but end of source found""","RET"),
+      ParseError(4,"parse error","Unsupported Instruction(LEN, DC      5)"," LEN      DC      5"),
+      ParseError(5,"parse error","string matching regex `;.*$' expected but `1' found", " BUFF1    DC      'CASL2'"),
+      ParseError(6,"parse error","string matching regex `;.*$' expected but `2' found", " BUFF2    DC      'COMET2'"),
+      ParseError(7,"START is not found.","","         END")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
 
@@ -688,6 +688,36 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
 
     assert(byteCode === rightByte)
+  }
+
+  it should " parse sample instructions (Equal Constatnts Error Constants ) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         OUT     =5I545, =5",
+      "         RET",
+      "BUFF2    DC      'COMET2'",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      //MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("EL2C1", None), LabelOfOperand("EL2C2", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 6 word
+      //AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 5 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 1 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(ParseError(2, "No Good Operands(OUT, =5I545,EL2C2)","","         OUT     =5I545, =5")))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
   }
 
 

@@ -115,7 +115,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
     InstructionFactory.parseOperand(instruction.code,
       this.currentOperands.getOrElse(List.empty),
       this.currentScope) match {
-      case Left(msg) => this.appendError(msg, "")
+      case Left(msg) => this.appendError(msg, "", instruction.raw_string)
       case Right(c) => {
         val newSymbol = this.createNewSymbol(instruction)
 
@@ -124,10 +124,10 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
             // No Label Or exists Start
             if (instruction.lbl.isEmpty) {
               this.createInnerResult(instruction, Some(c), newSymbol, None,
-                Some(ParseError(instruction.line_number, "START need Label", "", instruction)), startFound = true, this.isDataExists)
+                Some(ParseError(instruction.line_number, "START need Label", "", instruction.raw_string)), startFound = true, this.isDataExists)
             } else if (this.startFound) {
               this.createInnerResult(instruction, Some(c), newSymbol, None,
-                Some(ParseError(instruction.line_number, "START is found before END", "", instruction)), startFound = true, this.isDataExists)
+                Some(ParseError(instruction.line_number, "START is found before END", "",  instruction.raw_string)), startFound = true, this.isDataExists)
             } else {
               this.createInnerResult(instruction, Some(c), newSymbol, instruction.lbl,
                 None, startFound = true, this.isDataExists)
@@ -137,7 +137,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
           case AssemblyInstruction.END => {
             if(!this.startFound){
               this.createInnerResult(instruction, None, newSymbol, None,
-                Some(ParseError(instruction.line_number, "START is not found.", "", instruction)), startFound = false, this.isDataExists)
+                Some(ParseError(instruction.line_number, "START is not found.", "",  instruction.raw_string)), startFound = false, this.isDataExists)
             } else {
               this.createInnerResult(instruction, None, newSymbol, None, None, startFound = false, this.isDataExists)
             }
@@ -146,7 +146,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
           case MachineInstruction.RET  => {
             if(this.isDataExists){
               this.createInnerResult(instruction, Some(c), newSymbol, Some(this.currentScope),
-                Some(ParseError(instruction.line_number, "Data definition in program.", "", instruction)), this.startFound, isDataExists = false)
+                Some(ParseError(instruction.line_number, "Data definition in program.", "",  instruction.raw_string)), this.startFound, isDataExists = false)
             } else {
               this.createInnerResult(instruction, Some(c), newSymbol, Some(this.currentScope), None, this.startFound, isDataExists = false)
             }
@@ -210,9 +210,9 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
    * @param message error detail
    * @return
    */
-  def appendError(title: String, message: String): InnerParseResult = {
+  def appendError(title: String, message: String, line: String): InnerParseResult = {
     this.copy(lineNumber = this.lineNumber + 1,
-      errors = ParseError(this.lineNumber, title, message, null) :: this.errors)
+      errors = ParseError(this.lineNumber, title, message, line) :: this.errors)
   }
 
   /**

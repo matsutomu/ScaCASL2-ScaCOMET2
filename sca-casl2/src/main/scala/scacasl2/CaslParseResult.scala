@@ -23,4 +23,4 @@ case class InstructionRichInfo(line: Option[InstructionLine], model: Instruction
 case class ParseError(lineNumber: Int,
                       msg: String,
                       detailMsg: String,
-                      line: ProgramLine)
+                      rawLine: String)
