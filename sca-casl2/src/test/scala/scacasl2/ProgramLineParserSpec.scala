@@ -40,10 +40,8 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
   it should " parse error operation code " in {
     ProgramLineParser.parseLine("CASL PRINT MAIN", 1) match {
-      case Right(result) => throw new RuntimeException
-      case Left(msg) => {
-        assert(msg === "Unsupported Instruction(PRINT, MAIN)")
-      }
+      case Left(msg) => assert(msg === "Unsupported Instruction(PRINT, MAIN)")
+      case Right(_)  => throw new RuntimeException
     }
 
   }
@@ -649,6 +647,47 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
 
+  }
+
+  it should " parse sample instructions (Equal Constatnts) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         OUT     ='CASL2', =5",
+      "         RET",
+      "BUFF2    DC      'COMET2'",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("EL2C1", None), LabelOfOperand("EL2C2", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 6 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'CASL2'",  List('C','A','S','L','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 5 word
+      AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 1 word
+      //AssemblyInstruction("END"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("END"), "COUNT1"), // 1 word
+    )
+
+    val answerSymbols = Map(".SOUT1" -> 0, "SOUT1.BUFF2" -> 4, "SOUT1.EL2C1" -> 10, "SOUT1.EL2C2" -> 15)
+
+    assert(result.errors.isEmpty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+
+    val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    val rightByte = List('C', 'A',  'S', 'L',    0,    0,    0,
+      0,    0,    0,   0,    0,    0,    0,
+      0,    0, 0x91,0x00,    0, 0x0A,    0,0x0F,
+      0x81, 0,    0, 'C',    0,  'O',    0, 'M',    0,  'E',    0, 'T',  0, '2',
+      0,  'C',    0,  'A',    0, 'S',    0,  'L',    0, '2',  0, 0x05
+    ).map(e => e.toByte)
+
+
+    assert(byteCode === rightByte)
   }
 
 

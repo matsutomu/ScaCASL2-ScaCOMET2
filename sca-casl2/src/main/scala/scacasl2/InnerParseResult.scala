@@ -2,7 +2,6 @@ package scacasl2
 
 import scacasl2.instruction._
 
-import scala.collection.mutable.ListBuffer
 
 private[scacasl2] case class InnerParseResult(lineNumber: Int,
                                               instructions:  List[InstructionRichInfo],
@@ -13,7 +12,8 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
                                               startFound:   Boolean = false,
                                               isDataExists: Boolean = false,
                                               currentScope: String,
-                                              instStepCounter: Int) {
+                                              instStepCounter: Int,
+                                              currentOperands: Option[List[String]]) {
 
 
   /**
@@ -32,14 +32,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
    */
   def parseEachLine(line: ProgramLine): InnerParseResult = line match {
     case _: CommentLine     => this.copy(lineNumber = this.lineNumber + 1)
-    case r: InstructionLine => {
-
-      val (tempResult, tempOperands) = r.operands.map {
-        this.convertForEqualConstants(_, this.currentScope)
-      } getOrElse(this.copy(), None)
-
-      this.parseInstructionLine(r, tempOperands, tempResult)
-    }
+    case r: InstructionLine => this.convertForEqualConstants(r.operands, this.currentScope).parseInstructionLine(r)
   }
 
   /**
@@ -49,34 +42,55 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
    * @param currentScope
    * @return
    */
-  private def convertForEqualConstants(operands: List[String],
-                                       currentScope: String): (InnerParseResult, Some[List[String]]) = {
-    val reg_equal = "=-?[0-9]+|=#[0-9A-Fa-f]{4}|='[^¥s]+'"
+  private def convertForEqualConstants(operands: Option[List[String]],
+                                       currentScope: String): InnerParseResult = {
 
-    val newOperands: ListBuffer[String] = new ListBuffer
-    val tempDc: ListBuffer[AdditionalDc] = new ListBuffer
-    val errMsg: ListBuffer[String] = new ListBuffer
-
-    operands.zipWithIndex.map {
-      case (m, i) =>
-        if (m.matches(reg_equal)) {
-          val newLabel = s"%EQLABEL$i"
-
-          newOperands += newLabel
-          InstructionFactory.parseOperand(AssemblyInstruction.DC,
-            List(m.drop(1)),
-            currentScope) match {
-            case Right(c)  => tempDc += AdditionalDc(currentScope + "." + newLabel, c)
-            case Left(msg) => errMsg += msg
-          }
-        } else {
-          newOperands += m
-        }
+    if(operands.isDefined){
+      val replaced = this.procIncludeEqualOperands(operands.get)
+      this.copy(currentOperands = Some(replaced.replacedOperand),
+        additionalDc    = replaced.dc    ::: this.additionalDc,
+        errAdditionalDc = replaced.errdc ::: this.errAdditionalDc)
+    } else {
+      this.copy(currentOperands = None)
     }
 
-    (this.copy(additionalDc = tempDc.toList ::: this.additionalDc,
-      errAdditionalDc = errMsg.toList ::: this.errAdditionalDc),
-      Some(newOperands.toList))
+  }
+
+  case class EqualConstantsResult(replacedOperand: List[String], dc: List[AdditionalDc], errdc: List[String])
+
+  private def procIncludeEqualOperands(operands: List[String]): EqualConstantsResult = {
+    val reg_equal = "=-?[0-9]+|=#[0-9A-Fa-f]{4}|='[^¥s]+'"
+
+    def innerIncludeEqualOperands(operands: List[String],
+                                  currentIndex: Int,
+                                  result: EqualConstantsResult): EqualConstantsResult = {
+      operands match {
+        case Nil    => result
+        case x::y if x.matches(reg_equal) => {
+          val newLabel = s"EL${this.lineNumber}C$currentIndex"
+          val res = InstructionFactory.parseOperand(AssemblyInstruction.DC,
+            List(x.drop(1)),
+            currentScope) match {
+            case Right(c)  => result.copy(replacedOperand = newLabel :: result.replacedOperand,
+              dc = AdditionalDc(currentScope + "." + newLabel, c) :: result.dc)
+            case Left(msg) => result.copy(replacedOperand = newLabel :: result.replacedOperand,
+              errdc = msg :: result.errdc)
+          }
+          innerIncludeEqualOperands(y, currentIndex + 1, res)
+        }
+        case x::y => {
+          val res = result.copy(replacedOperand = x :: result.replacedOperand)
+          innerIncludeEqualOperands(y, currentIndex + 1, res)
+        }
+      }
+    }
+
+    val res = innerIncludeEqualOperands(operands, 1,
+      EqualConstantsResult(List.empty[String], List.empty[AdditionalDc], List.empty[String]))
+
+    res.copy(replacedOperand = res.replacedOperand.reverse,
+      dc    = res.dc.reverse,
+      errdc = res.errdc.reverse)
   }
 
   /**
@@ -94,17 +108,13 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
   /**
    * InstructionLine convert to InnerParseResult
    * @param instruction
-   * @param tempOperand
-   * @param tempResult
    * @return
    */
-  private def parseInstructionLine(instruction: InstructionLine,
-                                   tempOperand: Option[List[String]],
-                                   tempResult: InnerParseResult): InnerParseResult = {
+  private def parseInstructionLine(instruction: InstructionLine): InnerParseResult = {
 
     InstructionFactory.parseOperand(instruction.code,
-      tempOperand.getOrElse(List.empty),
-      tempResult.currentScope) match {
+      this.currentOperands.getOrElse(List.empty),
+      this.currentScope) match {
       case Left(msg) => this.appendError(msg, "")
       case Right(c) => {
         val newSymbol = this.createNewSymbol(instruction)
@@ -114,46 +124,46 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
             // No Label Or exists Start
             if (instruction.lbl.isEmpty) {
               this.createInnerResult(instruction, Some(c), newSymbol, None,
-                Some(ParseError(instruction.line_number, "START need Label", "", instruction)), startFound = true, tempResult.isDataExists)
-            } else if (tempResult.startFound) {
+                Some(ParseError(instruction.line_number, "START need Label", "", instruction)), startFound = true, this.isDataExists)
+            } else if (this.startFound) {
               this.createInnerResult(instruction, Some(c), newSymbol, None,
-                Some(ParseError(instruction.line_number, "START is found before END", "", instruction)), startFound = true, tempResult.isDataExists)
+                Some(ParseError(instruction.line_number, "START is found before END", "", instruction)), startFound = true, this.isDataExists)
             } else {
               this.createInnerResult(instruction, Some(c), newSymbol, instruction.lbl,
-                None, startFound = true, tempResult.isDataExists)
+                None, startFound = true, this.isDataExists)
             }
           }
 
           case AssemblyInstruction.END => {
-            if(!tempResult.startFound){
+            if(!this.startFound){
               this.createInnerResult(instruction, None, newSymbol, None,
-                Some(ParseError(instruction.line_number, "START is not found.", "", instruction)), startFound = false, tempResult.isDataExists)
+                Some(ParseError(instruction.line_number, "START is not found.", "", instruction)), startFound = false, this.isDataExists)
             } else {
               this.createInnerResult(instruction, None, newSymbol, None, None, startFound = false, this.isDataExists)
             }
           }
 
           case MachineInstruction.RET  => {
-            if(tempResult.isDataExists){
-              this.createInnerResult(instruction, Some(c), newSymbol, Some(tempResult.currentScope),
-                Some(ParseError(instruction.line_number, "Data definition in program.", "", instruction)), tempResult.startFound, isDataExists = false)
+            if(this.isDataExists){
+              this.createInnerResult(instruction, Some(c), newSymbol, Some(this.currentScope),
+                Some(ParseError(instruction.line_number, "Data definition in program.", "", instruction)), this.startFound, isDataExists = false)
             } else {
-              this.createInnerResult(instruction, Some(c), newSymbol, Some(tempResult.currentScope), None, tempResult.startFound, isDataExists = false)
+              this.createInnerResult(instruction, Some(c), newSymbol, Some(this.currentScope), None, this.startFound, isDataExists = false)
             }
           }
 
           case AssemblyInstruction.DS => {
-            this.createInnerResult(instruction, Some(c), newSymbol, Some(tempResult.currentScope), None,
-              tempResult.startFound, isDataExists = true)
+            this.createInnerResult(instruction, Some(c), newSymbol, Some(this.currentScope), None,
+              this.startFound, isDataExists = true)
           }
 
           case AssemblyInstruction.DC=>
-            this.createInnerResult(instruction, Some(c), newSymbol, Some(tempResult.currentScope), None,
-              tempResult.startFound, isDataExists = true)
+            this.createInnerResult(instruction, Some(c), newSymbol, Some(this.currentScope), None,
+              this.startFound, isDataExists = true)
 
           case _ =>
-            this.createInnerResult(instruction, Some(c), newSymbol, Some(tempResult.currentScope), None,
-              tempResult.startFound, tempResult.isDataExists)
+            this.createInnerResult(instruction, Some(c), newSymbol, Some(this.currentScope), None,
+              this.startFound, this.isDataExists)
 
         }
       }
@@ -183,7 +193,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
                                 isDataExists: Boolean): InnerParseResult = {
     this.copy(lineNumber = this.lineNumber + 1,
       instructions  = if(instruction.isDefined) InstructionRichInfo(Some(instructionLine), instruction.get) :: this.instructions else this.instructions,
-      symbolTable   = if(newSymbol.isDefined) newSymbol.get ++ this.symbolTable else this.symbolTable,
+      symbolTable   = if(newSymbol.isDefined) this.symbolTable ++ newSymbol.get else this.symbolTable,
       currentScope  = if(scope.isDefined) scope.get else "",
       instStepCounter = if(instruction.isDefined) this.instStepCounter + instruction.get.wordSize else this.instStepCounter,
       errors = if (parseError.isDefined) parseError.get :: this.errors else this.errors,
@@ -222,11 +232,21 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
   def convertCaslParseResult(): CaslParseResult = {
     if(this.additionalDc.isEmpty) this.parseResult
     else {
-      val dcMap = this.additionalDc.map(e => e.label -> e.instruction.wordSize).toMap
+
+      val (tmpSymbol, tmpCounter, tmpInst) =
+        this.additionalDc.foldLeft((Map.empty[String, Int],
+          this.instStepCounter,
+          List.empty[InstructionRichInfo])){
+        (e, a) =>
+          (e._1 ++ Map(a.label -> (e._2)),
+            e._2 + a.instruction.wordSize,
+            InstructionRichInfo(None, a.instruction) :: e._3)
+      }
+
       this.copy(
-        symbolTable = dcMap ++ this.symbolTable,
-        instStepCounter = this.instStepCounter + this.additionalDc.foldLeft(0)((i, add) => i + add.instruction.wordSize),
-        instructions    = this.additionalDc.map(e => InstructionRichInfo(None, e.instruction)) ::: this.instructions,
+        symbolTable     = this.symbolTable ++ tmpSymbol,
+        instStepCounter = tmpCounter,
+        instructions    = tmpInst ::: this.instructions,
       ).parseResult
     }
   }
@@ -255,7 +275,8 @@ object InnerParseResult {
       startFound = false,
       isDataExists = false,
       currentScope = "",
-      instStepCounter = 0)
+      instStepCounter = 0,
+      currentOperands =  None)
   }
 }
 

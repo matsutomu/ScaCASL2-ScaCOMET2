@@ -80,8 +80,7 @@ object Helper {
    */
   def bitToSignedShort(x: Int): Int = x & 0xffff match {
     case y: Int if 0x0000 <= y && y <= 0x7fff => y
-    case y: Int if 0x8000 <= y && y <= 0xffff => y - 0x10000
-    case _  => throw new IllegalArgumentException
+    case y: Int => y - 0x10000
   }
 
 
@@ -91,9 +90,6 @@ object Helper {
    * @param x
    * @return Unsigned Short
    */
-  def bitToUnsignedShort(x: Int): Int = x & 0xffff match {
-    case y: Int if 0 <= y => y
-    case y                => y + 0x10000 // no case
-  }
+  def bitToUnsignedShort(x: Int): Int = x & 0xffff
 
 }

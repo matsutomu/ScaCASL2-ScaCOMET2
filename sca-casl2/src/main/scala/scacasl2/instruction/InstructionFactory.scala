@@ -176,7 +176,7 @@ object InstructionFactory {
       val info = INSTRUCTION_INF_MAP(code)
       if (operands == List.empty)
         Right(new AssemblyInstruction(code, new OperandNoArg, info, scope))
-      else Left(ERR_NO_GOOD_OPERAND + s"($code, $operands)")
+      else Left(ERR_NO_GOOD_OPERAND + s"($code, ${operands.mkString(",")})")
     }
 
   private def analyzeDs =
@@ -188,13 +188,13 @@ object InstructionFactory {
           && operands.head.toInt <= DS_MAX_NUM) { // #todo what max value?
         val ope = OperandDs(operands.head.toInt)
         Right(AssemblyInstruction(code, ope, info, scope))
-      } else Left(ERR_NO_GOOD_OPERAND + s"($code, $operands)")
+      } else Left(ERR_NO_GOOD_OPERAND + s"($code, ${operands.mkString(",")})")
     }
 
   private def analyzeDc =
     (code: String, operands: List[String], scope: String) => {
       val info = INSTRUCTION_INF_MAP(code)
-      if (operands.isEmpty) Left(ERR_NO_GOOD_OPERAND + s"($code )")
+      if (operands.isEmpty) Left(ERR_NO_GOOD_OPERAND + s"(${code.mkString(",")} )")
       else {
         val elements = operands.map(element => analyzeConstants(element))
         Right(AssemblyInstruction(code, OperandDc(elements), info, scope))
@@ -210,7 +210,7 @@ object InstructionFactory {
         val ope = new OperandInOrOut(operands.map(LabelOfOperand(_, None)))
         Right(new MacroInstruction(code, ope, info, scope))
       } else {
-        Left(ERR_NO_GOOD_OPERAND + s"($code, $operands)")
+        Left(ERR_NO_GOOD_OPERAND + s"($code, ${operands.mkString(",")})")
       }
     }
 
