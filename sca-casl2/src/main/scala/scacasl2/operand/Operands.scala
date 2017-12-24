@@ -92,7 +92,7 @@ case class OperandR(r: Int) extends Operand {
   * @param l Label Of Operand.
   */
 case class OperandStart(l: Option[LabelOfOperand]) extends Operand {
-  override def disassemble: String = ???
+  override def disassemble: String = throw new UnsupportedOperationException
 
   override def includeLabel: Boolean = l.isDefined
 }
@@ -102,7 +102,7 @@ case class OperandStart(l: Option[LabelOfOperand]) extends Operand {
   * @param ml Multi Label Of Operand.
   */
 case class OperandInOrOut(ml: List[LabelOfOperand]) extends Operand {
-  override def disassemble: String = ???
+  override def disassemble: String = throw new UnsupportedOperationException
 
   override def includeLabel: Boolean = true
 }
@@ -112,7 +112,7 @@ case class OperandInOrOut(ml: List[LabelOfOperand]) extends Operand {
   * @param decimal Number of words to ensure.
   */
 case class OperandDs(decimal: Int) extends Operand {
-    override def disassemble: String = ???
+    override def disassemble: String = throw new UnsupportedOperationException
     override def includeLabel: Boolean = false
 }
 
@@ -121,7 +121,7 @@ case class OperandDs(decimal: Int) extends Operand {
   * @param consts decimal, hex, string, Label
   */
 case class OperandDc(consts: List[ElementOfDcInstruction]) extends Operand {
-  override def disassemble: String = ???
+  override def disassemble: String = throw new UnsupportedOperationException
 
   override def includeLabel: Boolean = consts.exists(e => e.isInstanceOf[LabelOfOperand])
 }
