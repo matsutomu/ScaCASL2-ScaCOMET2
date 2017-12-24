@@ -220,7 +220,7 @@ object InstructionFactory {
       if (operands == List.empty) {
         Right(new MacroInstruction(code, new OperandNoArg, info, scope))
       } else {
-        Left(ERR_NO_GOOD_OPERAND + s"($code, $operands)")
+        Left(ERR_NO_GOOD_OPERAND + s"($code, ${operands.mkString(",")})")
       }
     }
 

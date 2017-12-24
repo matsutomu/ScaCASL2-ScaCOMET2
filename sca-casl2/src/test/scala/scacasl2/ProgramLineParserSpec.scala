@@ -791,4 +791,105 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
   }
 
 
+  it should " parse sample instructions (DS error operand) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         RET",
+      "BUFF1    DS  -1",
+      "BUFF2    DS  2000",
+      "BUFF2    DS  2001",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+      AssemblyInstruction("DS",  OperandDs(2000) , InstructionFactory.INSTRUCTION_INF_MAP("DS"),"SOUT1"), // 5 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(
+      ParseError(3,"No Good Operands(DS, -1)","","BUFF1    DS  -1"),
+      ParseError(5,"No Good Operands(DS, 2001)","","BUFF2    DS  2001")))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+  }
+
+  it should " parse sample instructions (END error cause not empty operands) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         RET",
+      "         END SOUT1"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+
+    assert(result.errors === List(
+      ParseError(3,"No Good Operands(END, SOUT1)","","         END SOUT1"),
+      ParseError(4,"END is not found.","","")))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+  }
+
+  it should " parse sample instructions (DC error empty operands) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         RET",
+      "LBL1     DC",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+    assert(result.errors === List(ParseError(3,"No Good Operands(D,C )","","LBL1     DC")))
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+  }
+
+  it should " parse sample instructions (RPUSH/RPOP error empty operands) " in {
+
+    val programLines = List(
+      "SOUT1    START",
+      "         RET",
+      "         RPUSH 1",
+      "         RPOP  2",
+      "         END"
+    )
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
+    )
+
+    val answerSymbols = Map()
+    assert(result.errors === List(
+      ParseError(3,"No Good Operands(RPUSH, 1)","","         RPUSH 1"),
+      ParseError(4,"No Good Operands(RPOP, 2)","","         RPOP  2"))
+    )
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+  }
+
+
 }
