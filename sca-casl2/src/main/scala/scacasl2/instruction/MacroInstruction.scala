@@ -27,6 +27,5 @@ object MacroInstruction {
 
   val instructions = Set(IN, OUT, RPUSH, RPOP)
 
-  def contain(code: String) = instructions.contains(code)
 
 }

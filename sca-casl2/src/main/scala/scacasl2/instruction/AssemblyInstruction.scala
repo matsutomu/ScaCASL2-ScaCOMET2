@@ -43,6 +43,5 @@ object AssemblyInstruction {
 
   val instructions = Set(START, END, DS, DS)
 
-  def contain(code: String) = instructions.contains(code)
 
 }

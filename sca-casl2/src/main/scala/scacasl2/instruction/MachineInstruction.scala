@@ -106,6 +106,5 @@ object MachineInstruction {
                          RET,
                          SVC)
 
-  def contain(code: String) = instructions.contains(code)
 
 }
