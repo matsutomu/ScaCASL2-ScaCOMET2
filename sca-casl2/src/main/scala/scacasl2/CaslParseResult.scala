@@ -18,7 +18,7 @@ case class CaslParseResult(instructions: List[InstructionRichInfo],
 
 }
 
-case class InstructionRichInfo(line: Option[InstructionLine], model: Instruction)
+case class InstructionRichInfo(line: InstructionLine, model: Instruction)
 
 case class ParseError(lineNumber: Int,
                       msg: String,

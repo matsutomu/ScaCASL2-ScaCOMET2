@@ -22,12 +22,11 @@ object ScaCasl2 {
     */
   def main(args: Array[String]): Unit = {
     try {
-      val options = parseArgs(args)
-      val message = parseFile(options)
-      message.foreach(println)
+      val options = this.parseArgs(args)
+      this.parseFile(options)
 
     } catch {
-      case e: InvalidParameterException => {
+      case e: Exception => {
         println(e.getMessage)
         println(USAGE)
       }
@@ -37,24 +36,14 @@ object ScaCasl2 {
   /**
     * args convert to Options
     *
-    * @param dump
-    * @param version
-    * @param help
     * @param argList
     */
-  case class Options(dump: Boolean,
-                     version: Boolean,
-                     help: Boolean,
+  case class Options(command: CaslCliCommand,
                      argList: List[String]) {
 
-    def invalidOption = {
-      if (help || argList.isEmpty || argList.size >= 3) true
-      else false
-    }
+    def casFileName: String = argList.head
 
-    def casFileName = argList.head
-
-    def comFileName = {
+    def comFileName: String = {
       if (argList.size == 1 && argList.head.contains(".")) {
         argList.head.split('.')(0) + ".com"
       } else if (argList.size == 2) {
@@ -72,25 +61,26 @@ object ScaCasl2 {
     * @param args
     * @return
     */
-  def parseArgs(args: Array[String]) = {
+  def parseArgs(args: Array[String]): Options = {
 
-    var dump = false
-    var version = false
-    var help = false
-    var tmpArgList = scala.collection.mutable.ListBuffer.empty[String]
-
-    for (e <- args) {
-      e match {
-        case "-a" => dump = true
-        case "-v" | "--version" => version = true
-        case "-h" | "--help" => help = true
-        case option if (option.startsWith("-")) =>
-          throw new InvalidParameterException(option)
-        case other => tmpArgList += other
-      }
+    val cliCommand = args.head match {
+      case "-a" => CaslCliCommand.Dump
+      case "-v" | "--version" => CaslCliCommand.Version
+      case "-h" | "--help"    => CaslCliCommand.Help
+      case option if option.startsWith("-") =>
+        CaslCliCommand.InputError
+      case _ => CaslCliCommand.Run
     }
 
-    Options(dump, version, help, tmpArgList.toList)
+    cliCommand match {
+      case CaslCliCommand.Run =>
+        Options(CaslCliCommand.Run, args.toList)
+      case CaslCliCommand.InputError =>
+        Options(CaslCliCommand.InputError, args.toList)
+      case _ =>
+        Options(cliCommand, args.tail.toList)
+
+    }
   }
 
   /**
@@ -101,68 +91,47 @@ object ScaCasl2 {
     * @param options
     * @return
     */
-  def parseFile(options: Options): List[String] = {
-    var tmpList: ListBuffer[String] = new ListBuffer[String]
-    if (options.version) {
-      tmpList += "CASLII Assembler version 0.1 (Scala) "
-    } else if (options.invalidOption) {
-      tmpList += USAGE
-      tmpList += "  -a           turn on verbose listings"
-      tmpList += "  -v --version display version and exit"
-    } else {
-      val comName = options.comFileName
+  def parseFile(options: Options): Unit = options.command match {
+    case CaslCliCommand.Version =>
+      println("CASLII Assembler version 0.1 (Scala) ")
 
-      try {
-        val f1 = File(options.casFileName)
-        if (f1.exists) {
-          val lines = f1.lines.toList
-          val result = ProgramLineParser.parseFirst(lines)
-          if (result.errors.size == 0) {
-            try {
-              val binaryData = ProgramLineParser.convertBinaryCode(
-                result.instructionModels,
-                result.symbolTable)
-              val fw = File(comName)
-              fw.writeByteArray(binaryData.toArray)
-
-              tmpList += "[success]outout to " + fw.path.getFileName.toString
-              if (options.dump) {
-                tmpList = tmpList ++ dump(result.instructions,
-                                          result.symbolTable)
-              }
-
-            } catch {
-              case e: java.io.IOException =>
-                tmpList += e.getMessage
-                e.getStackTrace.foreach(e => tmpList += e.toString)
-            }
-          } else {
-            tmpList += s"[error] It failed to assemble the ${f1.path.getFileName.toString}."
-            result.errors.foreach { x =>
-              tmpList += s"line: ${x.lineNumber}, message:  ${x.msg}"
-              tmpList += s"¥t¥t  ${x.detailMsg}"
-            }
-
-          }
-
-        } else {
-          tmpList += s"[error] no input file path " + f1.path.getFileName.toString
-
-        }
-
-      } catch {
-        case e: Exception =>
-          tmpList += e.getMessage
-
-          e.printStackTrace
-
-          tmpList += USAGE
-          tmpList += "  -a           turn on verbose listings"
-          tmpList += "  -v --version display version and exit"
-      }
+    case CaslCliCommand.Help | CaslCliCommand.InputError => {
+      println(USAGE)
+      println("  -a           turn on verbose listings")
+      println("  -v --version display version and exit")
     }
 
-    tmpList.toList
+    case CaslCliCommand.Run | CaslCliCommand.Dump => {
+      val f1 = File(options.casFileName)
+      if (f1.exists) {
+        val result = ProgramLineParser.parseFirst(f1.lines.toList)
+        if (result.errors.isEmpty) {
+          try {
+            val binaryData = ProgramLineParser.convertBinaryCode(
+              result.instructionModels,
+              result.symbolTable)
+
+            val fw = File(options.comFileName)
+            fw.writeByteArray(binaryData.toArray)
+
+            println(s"[success]output to ${fw.pathAsString}")
+            if (options.command == CaslCliCommand.Dump) {
+              println(dump(result.instructions, result.symbolTable))
+            }
+          } catch {
+            case e: java.io.IOException => e.printStackTrace()
+          }
+        } else {
+          println(s"[error] It failed to assemble. path:${f1.pathAsString}")
+          result.errors.foreach { x =>
+            println(s"line: ${x.lineNumber}, message:  ${x.msg}")
+            println(s"\t\t  ${x.detailMsg}")
+          }
+        }
+      } else {
+        println(s"[error] no input file. path:${f1.pathAsString}")
+      }
+    }
   }
 
   /**
@@ -173,61 +142,27 @@ object ScaCasl2 {
     * @return
     */
   def dump(instructions: List[InstructionRichInfo],
-           symbolTbl: Map[String, Int]) = {
-    var tmpList: ListBuffer[String] = new ListBuffer[String]
+           symbolTbl: Map[String, Int]): Unit = {
     var addr = 0
-    tmpList += "Addr\tOp\t\tLine\tSource code"
-    for (e <- instructions) {
+    println("Addr\tOp\t\tLine\tSource code")
 
-      e.line
-        .map { line =>
-          if (line.code != "START") {
-            val wordList =
-              convertWordLiteral(e.model.convertToWords(symbolTbl))
-            for (w <- wordList) {
-              if (w == wordList.head) {
-                val output = e.line
-                  .map(l => l.line_number + "\t" + l.raw_string)
-                  .getOrElse("")
-                tmpList += "#" + "%04X".format(addr) + "\t" + s"#$w" + "\t\t" + output
-              } else {
-                tmpList += "#" + "%04X".format(addr) + "\t" + s"#$w" + "\t\t"
-              }
-              addr = addr + 1
-            }
-          }
-        }
-        .getOrElse {
-          val additionalWordList =
-            convertWordLiteral(e.model.convertToWords(symbolTbl))
-          for (w <- additionalWordList) {
-            if (w == additionalWordList.head) {
-              tmpList += "#" + "%04X".format(addr) + "\t" + s"#$w" + "\t\t" + e.model.code + " " + e.model.ope
-            } else {
-              tmpList += "#" + "%04X".format(addr) + "\t" + s"#$w" + "\t\t"
-            }
-            addr = addr + 1
-          }
-        }
+    for(l      <- instructions.filter(p => p.line.code != "START");
+        (w, i) <- l.model.convertToWords(symbolTbl).zipWithIndex.toList){
+
+
+
+      println("#" + "%04X".format(addr) + "\t" + s"#$w" + "\t\t" +
+        (if(i == 0) l.line.line_number + "\t" + l.line.raw_string else ""))
+
+      addr = addr + 1
+
     }
 
-    tmpList += ""
-    tmpList += "Defined labels"
+    println("")
+    println("Defined labels")
     for (lbl <- symbolTbl.toSeq.sortBy(_._2)) {
-      tmpList += lbl._1 + " " + "#" + "%04X".format(lbl._2)
+      println(lbl._1 + " " + "#" + "%04X".format(lbl._2))
     }
-
-    tmpList.toList
-  }
-
-  private def convertWordLiteral(binary: Array[Int]) = {
-    val bits: ListBuffer[String] = new ListBuffer
-
-    for (w <- binary) {
-      bits += "%02x".format((w.toShort >> 8) & 0xff) +
-        "%02x".format(w.toShort & 0xff)
-    }
-    bits.toList
   }
 
 }

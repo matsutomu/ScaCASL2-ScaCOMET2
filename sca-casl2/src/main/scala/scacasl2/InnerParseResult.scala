@@ -1,6 +1,7 @@
 package scacasl2
 
 import scacasl2.instruction._
+import scacasl2.operand.{OperandDc, OperandDs}
 
 
 private[scacasl2] case class InnerParseResult(lineNumber: Int,
@@ -192,7 +193,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
                                 startFound: Boolean,
                                 isDataExists: Boolean): InnerParseResult = {
     this.copy(lineNumber = this.lineNumber + 1,
-      instructions  = if(instruction.isDefined) InstructionRichInfo(Some(instructionLine), instruction.get) :: this.instructions else this.instructions,
+      instructions  = if(instruction.isDefined) InstructionRichInfo(instructionLine, instruction.get) :: this.instructions else this.instructions,
       symbolTable   = if(newSymbol.isDefined) this.symbolTable ++ newSymbol.get else this.symbolTable,
       currentScope  = if(scope.isDefined) scope.get else "",
       instStepCounter = if(instruction.isDefined) this.instStepCounter + instruction.get.wordSize else this.instStepCounter,
@@ -240,7 +241,11 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
         (e, a) =>
           (e._1 ++ Map(a.label -> (e._2)),
             e._2 + a.instruction.wordSize,
-            InstructionRichInfo(None, a.instruction) :: e._3)
+            InstructionRichInfo(
+              InstructionLine(Some(a.label),
+                AssemblyInstruction.DC,
+                Some(a.instruction.ope.asInstanceOf[OperandDc].consts.map(y => y.toString)), None, this.lineNumber, ""),
+                a.instruction) :: e._3)
       }
 
       this.copy(

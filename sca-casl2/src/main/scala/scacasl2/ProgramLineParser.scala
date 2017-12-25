@@ -95,7 +95,7 @@ object ProgramLineParser extends RegexParsers {
   /*******************************************************************/
 
   /**
-    * Parse Lines
+    * Parse All Lines. From File.
     *
     * @param codeLines CASL2 program lines
     * @return
@@ -114,14 +114,14 @@ object ProgramLineParser extends RegexParsers {
 
 
   /**
-    * Parse Line
+    * Parse Line by scala.util.parsing.combinator
     *
     * @param input   each line
     * @param lineNo When I encode it and made a mistake, to display it
     * @return
     */
   def parseLine(input: String, lineNo: Int): Either[String, ProgramLine] =
-    this.parseAll(this.instructions, input) match {
+    this.parseAll(this.instructions, input) match { // parsing.combinator
       case Success(result, _) => result match {
         case r: CommentLine     => Right(CommentLine(r.comment, lineNo, input))
         case r: InstructionLine =>

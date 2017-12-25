@@ -18,10 +18,10 @@ object InstructionFactory {
   val DS_MAX_NUM = 2000
   val DC_STRING_MAX_LENGTH = 2000
 
-  val NOT_ALLOW_LABEL = Range(0, 8).map(x => s"GR$x").toSet
+  val NOT_ALLOW_LABEL: Set[String] = Range(0, 8).map(x => s"GR$x").toSet
 
-  val GENERAL_REGISTERS_MAP = Range(0, 9).map(x => s"GR$x" -> x).toMap
-  val INDEX_REGISTERS_MAP = Range(1, 8).map(x => s"GR$x" -> x).toMap
+  val GENERAL_REGISTERS_MAP: Map[String, Int] = Range(0, 9).map(x => s"GR$x" -> x).toMap
+  val INDEX_REGISTERS_MAP:   Map[String, Int] = Range(1, 8).map(x => s"GR$x" -> x).toMap
 
   val ERR_UNSUPPORTED_OPERATION_CODE = "Unsupported Instruction"
   private val ERR_NO_GOOD_OPERAND = "No Good Operands"
@@ -194,7 +194,7 @@ object InstructionFactory {
   private def analyzeDc =
     (code: String, operands: List[String], scope: String) => {
       val info = INSTRUCTION_INF_MAP(code)
-      if (operands.isEmpty) Left(ERR_NO_GOOD_OPERAND + s"(${code.mkString(",")} )")
+      if (operands.isEmpty) Left(ERR_NO_GOOD_OPERAND + s"(${code} )")
       else {
         val elements = operands.map(element => analyzeConstants(element))
         Right(AssemblyInstruction(code, OperandDc(elements), info, scope))

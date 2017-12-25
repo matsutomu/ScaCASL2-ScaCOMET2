@@ -860,7 +860,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     )
 
     val answerSymbols = Map()
-    assert(result.errors === List(ParseError(3,"No Good Operands(D,C )","","LBL1     DC")))
+    assert(result.errors === List(ParseError(3,"No Good Operands(DC )","","LBL1     DC")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
   }
