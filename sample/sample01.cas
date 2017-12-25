@@ -1,0 +1,7 @@
+SOUT1    START
+         OUT     BUFF1, LEN
+         RET
+LEN      DC      5
+BUFF1    DC      'CASL2'
+BUFF2    DC      'COMET2'
+         END

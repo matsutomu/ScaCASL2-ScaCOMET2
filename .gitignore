@@ -23,7 +23,7 @@ standalone-build/
 *.pdf
 *.jar
 *.com
-*.cas
+# *.cas
 *.ser
 *~
 *.bak
