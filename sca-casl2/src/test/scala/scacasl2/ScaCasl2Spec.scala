@@ -43,19 +43,41 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
 
   it should " execute & dump" in {
 
-    /*
     val currentDirectory = new java.io.File(".").getCanonicalPath
 
     val test = this.runCasl2Out(List("-a",
       s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas").toArray)
 
-    print(test)
-
+    // #todo stripMargin last space!
     assert(test ===
       s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/count1.com
+         |Addr	Op		Line	Source code
+         |#0000	#7001		5	       PUSH    0, GR1        ;
+         |#0001	#0000
+         |#0002	#7002		6	       PUSH    0, GR2        ;
+         |#0003	#0000
+         |#0004	#2522		7	       SUBA    GR2, GR2      ;  Count = 0
+         |#0005	#3411		8	       AND     GR1, GR1      ;  全部のビットが'0'?
+         |#0006	#6300		9	       JZE     RETURN        ;  全部のビットが'0'なら終了
+         |#0007	#000F
+         |#0008	#1222		10	MORE   LAD     GR2, 1, GR2   ;  Count = Count + 1
+         |#0009	#0001
+         |#000A	#1201		11	       LAD     GR0,-1, GR1   ;  最下位の'1'のビット1個を
+         |#000B	#FFFF
+         |#000C	#3410		12	       AND     GR1,GR0       ;    '0'に変える
+         |#000D	#6300		13	       JZE     MORE          ;  '1'のビットが残っていれば繰り返し
+         |#000E	#0008
+         |#000F	#1402		14	RETURN LD      GR0,GR2       ;  GR0 = Count
+         |#0010	#7120		15	       POP     GR2           ;
+         |#0011	#7110		16	       POP     GR1           ;
+         |#0012	#8100		17	       RET                   ;  呼び出しプログラムへ戻る
+         |
+         |Defined labels
+         |.COUNT1 #0000
+         |COUNT1.MORE #0008
+         |COUNT1.RETURN #000F
          |""".stripMargin)
 
-    */
   }
 
 

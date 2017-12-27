@@ -106,20 +106,16 @@ object ScaCasl2 {
       if (f1.exists) {
         val result = ProgramLineParser.parseFirst(f1.lines.toList)
         if (result.errors.isEmpty) {
-          try {
-            val binaryData = ProgramLineParser.convertBinaryCode(
-              result.instructionModels,
-              result.symbolTable)
+          val binaryData = ProgramLineParser.convertBinaryCode(
+            result.instructionModels,
+            result.symbolTable)
 
-            val fw = File(options.comFileName)
-            fw.writeByteArray(binaryData.toArray)
+          val fw = File(options.comFileName)
+          fw.writeByteArray(binaryData.toArray)
 
-            println(s"[success]output to ${fw.pathAsString}")
-            if (options.command == CaslCliCommand.Dump) {
-              println(dump(result.instructions, result.symbolTable))
-            }
-          } catch {
-            case e: java.io.IOException => e.printStackTrace()
+          println(s"[success]output to ${fw.pathAsString}")
+          if (options.command == CaslCliCommand.Dump) {
+            dump(result.instructions, result.symbolTable)
           }
         } else {
           println(s"[error] It failed to assemble. path:${f1.pathAsString}")
@@ -148,14 +144,11 @@ object ScaCasl2 {
 
     for(l      <- instructions.filter(p => p.line.code != "START");
         (w, i) <- l.model.convertToWords(symbolTbl).zipWithIndex.toList){
-
-
-
-      println("#" + "%04X".format(addr) + "\t" + s"#$w" + "\t\t" +
-        (if(i == 0) l.line.line_number + "\t" + l.line.raw_string else ""))
+      val bytecode = intWordToSplitByte(w)
+      println(f"#$addr%04X\t$bytecode" +
+        (if(i == 0) "\t\t" + l.line.line_number + "\t" + l.line.raw_string else ""))
 
       addr = addr + 1
-
     }
 
     println("")
@@ -163,6 +156,12 @@ object ScaCasl2 {
     for (lbl <- symbolTbl.toSeq.sortBy(_._2)) {
       println(lbl._1 + " " + "#" + "%04X".format(lbl._2))
     }
+  }
+
+  private def intWordToSplitByte(word: Int): String = {
+    val (w1, w2) = ((word & 0xff00) >> 8, // **** **** 0000 0000
+               word & 0x00ff) // 0000 0000 **** ****
+    f"#$w1%02X$w2%02X"
   }
 
 }
