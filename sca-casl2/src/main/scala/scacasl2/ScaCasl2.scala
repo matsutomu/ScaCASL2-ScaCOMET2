@@ -27,7 +27,7 @@ object ScaCasl2 {
 
     } catch {
       case e: Exception => {
-        println(e.getMessage)
+        println("error ***********")
         println(USAGE)
       }
     }

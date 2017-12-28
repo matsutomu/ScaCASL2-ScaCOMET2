@@ -21,31 +21,57 @@ COMETIIの構成は、基本的に16bitをひとかたまりとして考えた�
 と言った特徴があります。
 
 ## ビルド & 実行
+sample ディレクトリにbuild用のシェルとCASLIIサンプルを置いています。
 
 ```shell
-$sbt
-sbt>assembly
-$cp ./sca-casl2/target/scala-2.12/sca-casl2-assembly-1.0.jar ./
-$cp ./sca-comet2/target/scala-2.12/sca-comet2-assembly-1.0.jar ./
-$java -jar sca-casl2-assembly-1.0.jar -a sample01.cas
-$java -jar sca-comet2-assembly-1.0.jar sample01.com
+$cd sample
+$./build.sh
+$java -jar sca-casl2-assembly-0.1.jar sample01.cas
+[success]output to sample/sample01.com
+$java -jar sca-comet2-assembly-0.1.jar sample01.com
+load /Users/matsutomu/work/github/ScaCASL2-ScaCOMET2/sample/sample01.com ...
+done.
+HELLO CASL2 & COMET2
 ```
 
 ## ScaCasl2
+### 利用方法
 
-更新予定
+CASLII のファイルをアセンブルするコマンドです。
+```
+$java -jar sca-casl2-assembly-"version".jar [Options] <CASL file path> <Assemble file path>
+```
+
+例えば、sample01.cas をアセンブルする時は以下の内容です。
+```
+$java -jar sca-casl2-assembly-0.1.jar sample01.cas
+[success]output to sample/sample01.com
+```
+
+実行ファイルを指定する場合の例です。
+```
+$java -jar sca-casl2-assembly-0.1.jar sample01.cas sample-exe.com
+[success]output to sample/sample-exe.com
+```
+
+Options
+
+| パラメータ | 内容|
+| -- | -- |
+| -v | バージョンの表示 |
+| -h | ヘルプ表示 |
+| -a | アセンブルをしつつ dump & コード & シンボル表をコンソールに表示|
 
 ## ScaComet2
-
+### 利用方法
 更新予定
 
 ## Other
 ### Unit Test
 $sbt test
 
-### Coverage
+### Coverage Report
 $sbt clean coverage test
-$sbt clean coverage it:test
 $sbt coverageReport
 
 # License
