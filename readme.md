@@ -55,7 +55,7 @@ $java -jar sca-casl2-assembly-0.1.jar sample01.cas sample-exe.com
 [success]output to sample/sample-exe.com
 ```
 
-◆ options
+◆ options  
 | パラメータ | 内容|
 | -- | -- |
 | -v | バージョンの表示 |
@@ -77,14 +77,14 @@ done.
 HELLO CASL2 & COMET2
 ```
 
-◆ options1
+◆ options1  
 | パラメータ | 内容|
 | -- | -- |
 | -v | バージョンの表示 |
 | -h | ヘルプ表示 |
 | -d | デバッグモードで実行|
 
-◆ options2
+◆ options2  
 | パラメータ | 内容|
 | -- | -- |
 | -c | step数をカウントして表示|
