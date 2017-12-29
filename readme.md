@@ -5,6 +5,7 @@ CASL2 / COMET2 を Scalaで実装しました。以下を大変参考にさせ�
 
 - [PyCASL2 & PyCOMET2 Java](https://github.com/oguna/pycasl2-pycomet2-java)
 - [CASLIIアセンブラ & シミュレータ PyCASL2 & PyCOMET2](http://www.image.med.osaka-u.ac.jp/member/nakamoto/pycasl2/index.html)
+- [YACASL2](http://www.j8takagi.net/yacasl2/)
 - [進数変換](https://hogehoge.tk/tool/number.html)
 
 ## 概要
@@ -37,9 +38,9 @@ HELLO CASL2 & COMET2
 ## ScaCasl2
 ### 利用方法
 
-CASLII のファイルをアセンブルするコマンドです。
+CASLII のファイルをアセンブルする方法です。
 ```
-$java -jar sca-casl2-assembly-"version".jar [Options] <CASL file path> <Assemble file path>
+$java -jar sca-casl2-assembly-"version".jar [options] <CASL file path> <Assemble file path>
 ```
 
 例えば、sample01.cas をアセンブルする時は以下の内容です。
@@ -54,8 +55,7 @@ $java -jar sca-casl2-assembly-0.1.jar sample01.cas sample-exe.com
 [success]output to sample/sample-exe.com
 ```
 
-Options
-
+◆ options
 | パラメータ | 内容|
 | -- | -- |
 | -v | バージョンの表示 |
@@ -64,6 +64,34 @@ Options
 
 ## ScaComet2
 ### 利用方法
+COMETII を実行する方法です。
+```
+$java -jar sca-comet2-assembly-0.1.jar [options1] [options2] <execute file path>
+```
+
+sample01.com を実行する場合には以下のようになります。
+```
+$java -jar sca-comet2-assembly-0.1.jar sample01.com
+load /Users/matsutomu/work/github/ScaCASL2-ScaCOMET2/sample/sample01.com ...
+done.
+HELLO CASL2 & COMET2
+```
+
+◆ options1
+| パラメータ | 内容|
+| -- | -- |
+| -v | バージョンの表示 |
+| -h | ヘルプ表示 |
+| -d | デバッグモードで実行|
+
+◆ options2
+| パラメータ | 内容|
+| -- | -- |
+| -c | step数をカウントして表示|
+| -du | 最終状態をlast_state.txtに保存|
+| -w | 引数に指定されたレジスターの情報を表示|
+
+### デバッグモード
 更新予定
 
 ## Other
@@ -71,7 +99,7 @@ Options
 $sbt test
 
 ### Coverage Report
-$sbt clean coverage test
+$sbt clean coverage test  
 $sbt coverageReport
 
 # License

@@ -377,7 +377,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     }
     assert(ScaComet2.dumpAll(machine) ===
       List(
-        """Step Count: 0""",
+        f"Step Count: 0",
         """PR:  #0000""",
         """SP:  #FF00""",
         """OF:  0""",

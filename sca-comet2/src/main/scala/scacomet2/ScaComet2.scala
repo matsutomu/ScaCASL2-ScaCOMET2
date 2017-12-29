@@ -81,6 +81,13 @@ object ScaComet2 {
                 } else {
                   this.waitForCommand(machine)
                 }
+
+                if(options.countStep)
+                  System.out.println("Step count: " + machine.stepCount)
+
+                if(options.dump)
+                  this.dumpToFile(machine)
+
               }
               case Left(message) => println(message)
             }
@@ -273,8 +280,7 @@ object ScaComet2 {
         case WaitForCommand.Disassemble   => machine.disassemble(optForWait.targetAddress1.getOrElse(0x0000), 16).foreach(println)
         case WaitForCommand.DumpToConsole => this.dump(machine, optForWait.targetAddress1.get).foreach(println(_))
         case WaitForCommand.DumpToFile    => {
-          val f = File("last_state.txt") // todo constant
-          dumpAll(machine).foreach(f.write)
+          this.dumpToFile(machine)
         }
         case WaitForCommand.DumpStack => this.dump(machine, machine.SP.word).foreach(println(_))
         case WaitForCommand.PrintHelp => println(this.MSG_HELP_FOR_WAIT_LOOP)
@@ -412,5 +418,9 @@ object ScaComet2 {
     tmpList.toList
   }
 
+  def dumpToFile(machine: Machine): Unit = {
+    val f = File("last_state.txt") // todo constant
+    f.write(dumpAll(machine).mkString(f"%n"))
+  }
 
 }

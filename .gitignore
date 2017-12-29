@@ -76,6 +76,7 @@ node_modules
 # sample
 sample/*.jar
 sample/*.com
+sample/*.txt
 
 
 # ensime
