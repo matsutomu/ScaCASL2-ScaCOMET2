@@ -55,12 +55,14 @@ $java -jar sca-casl2-assembly-0.1.jar sample01.cas sample-exe.com
 [success]output to sample/sample-exe.com
 ```
 
-◆ options  
-| パラメータ | 内容|
-| -- | -- |
-| -v | バージョンの表示 |
-| -h | ヘルプ表示 |
-| -a | アセンブルをしつつ dump & コード & シンボル表をコンソールに表示|
+options  
+
+| パラメータ | 内容 |  
+ -- | --   
+| -v | バージョンの表示 |  
+| -h | ヘルプ表示 |  
+| -a | アセンブルをしつつ dump & コード & シンボル表をコンソールに表示 |
+
 
 ## ScaComet2
 ### 利用方法

@@ -1,0 +1,6 @@
+SOUT1    START
+         OUT     HELLO, LEN
+         RET
+LEN      DC      20
+HELLO    DC      'HELLO CASL2 & COMET2'
+         END
