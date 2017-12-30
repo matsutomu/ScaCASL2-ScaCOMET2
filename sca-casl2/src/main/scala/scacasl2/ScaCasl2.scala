@@ -2,7 +2,6 @@ package scacasl2
 
 import java.security.InvalidParameterException
 import better.files.File
-import scala.collection.mutable.ListBuffer
 
 /**
   * CALSII Assembler main object class
@@ -27,7 +26,7 @@ object ScaCasl2 {
 
     } catch {
       case e: Exception => {
-        println("error ***********")
+        e.printStackTrace()
         println(USAGE)
       }
     }
@@ -43,13 +42,13 @@ object ScaCasl2 {
 
     def casFileName: String = argList.head
 
-    def comFileName: String = {
+    def comFileName: Option[String] = {
       if (argList.size == 1 && argList.head.contains(".")) {
-        argList.head.split('.')(0) + ".com"
+        Some(argList.head.split('.')(0) + ".com")
       } else if (argList.size == 2) {
-        argList(1)
+        Some(argList(1))
       } else {
-        throw new InvalidParameterException
+        None
       }
     }
 
@@ -109,14 +108,18 @@ object ScaCasl2 {
           val binaryData = ProgramLineParser.convertBinaryCode(
             result.instructionModels,
             result.symbolTable)
+          
+          options.comFileName.map { path =>
+            val fw = File(path)
+            fw.writeByteArray(binaryData.toArray)
+            println(s"[success]output to ${fw.pathAsString}")
+            if (options.command == CaslCliCommand.Dump) {
+              dump(result.instructions, result.symbolTable)
+            }
+          }.getOrElse(
+            println(s"[error] output parameter error. options(${options.argList.mkString(",")})")
+          )
 
-          val fw = File(options.comFileName)
-          fw.writeByteArray(binaryData.toArray)
-
-          println(s"[success]output to ${fw.pathAsString}")
-          if (options.command == CaslCliCommand.Dump) {
-            dump(result.instructions, result.symbolTable)
-          }
         } else {
           println(s"[error] It failed to assemble. path:${f1.pathAsString}")
           result.errors.foreach { x =>

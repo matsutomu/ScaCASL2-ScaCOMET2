@@ -3,7 +3,6 @@ package scacasl2
 import org.scalatest._
 import scacasl2.instruction._
 import scacasl2.operand._
-import scacasl2.ProgramLineParser._
 
 
 class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
@@ -391,7 +390,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
           case Right(_) => throw new RuntimeException
-          case Left(msg) => assert(msg === "No Good Operands(ST, #B GR0)")
+          case Left(msg) => assert(msg === "No Good Operands (ST: #B GR0)")
         }
       }
       case Left(msg) => throw new RuntimeException(msg)
