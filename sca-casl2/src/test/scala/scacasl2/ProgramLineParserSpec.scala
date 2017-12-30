@@ -384,7 +384,21 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
   }
 
+  it should " ST Instruction (no good operands) " in {
 
+    ProgramLineParser.parseLine("   ST #B GR0", 1) match {
+      case Right(result) => {
+        val pl = result.asInstanceOf[InstructionLine]
+        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+          case Right(_) => throw new RuntimeException
+          case Left(msg) => assert(msg === "No Good Operands(ST, #B GR0)")
+        }
+      }
+      case Left(msg) => throw new RuntimeException(msg)
+    }
+
+  }
+  
   "ProgramLineParser" should " parse sample instructions " in {
 
     val programLines = List(

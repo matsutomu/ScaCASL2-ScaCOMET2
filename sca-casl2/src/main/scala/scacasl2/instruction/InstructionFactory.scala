@@ -260,6 +260,16 @@ object InstructionFactory {
                   Right(mi)
                 }
               }
+              case checkOpe: OperandADR => {
+                if (checkOpe.address.isInstanceOf[IncorrectDescription]){
+                  val errLiteral =
+                    checkOpe.address.asInstanceOf[IncorrectDescription].literal
+                  Left(ERR_NO_GOOD_OPERAND + s"($code, $errLiteral)")
+                } else {
+                  Right(mi)
+                }
+              }
+
               case _ => Right(mi)
             }
           }

@@ -79,14 +79,16 @@ done.
 HELLO CASL2 & COMET2
 ```
 
-◆ options1  
+options1
+
 | パラメータ | 内容 |  
  -- | --   
 | -v | バージョンの表示 |  
 | -h | ヘルプ表示 |  
 | -d | デバッグモードで実行 |  
 
-◆ options2  
+options2
+
 | パラメータ | 内容 |  
  -- | -- 
 | -c | step数をカウントして表示 |  
