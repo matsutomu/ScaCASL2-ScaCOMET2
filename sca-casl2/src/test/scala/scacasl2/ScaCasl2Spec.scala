@@ -88,8 +88,7 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
         |""".stripMargin)
 
     assert(this.runCasl2Out(List("-a",s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas","count1.com","count1.com").toArray) ===
-      """[error] output parameter error. options(/Users/matsutomu/work/github/ScaCASL2-ScaCOMET2/sca-casl2/src/test/resources/count1.cas,count1.com,count1.com)
-        |""".stripMargin)
+      f"[error] output parameter error. options(${currentDirectory}/sca-casl2/src/test/resources/count1.cas,count1.com,count1.com)%n")
 
   }
 
