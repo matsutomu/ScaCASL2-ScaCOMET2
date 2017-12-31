@@ -16,9 +16,11 @@ class InstructionFactorySpec extends FlatSpec with DiagrammedAssertions {
   }
 
   "InstructionFactory" can " parse Machine Code and operands (error)" in {
-    assertNoGoodOperand(InstructionFactory.parseOperand("NOP",List("GR0", "#1"),""),
+    val inst = InstructionFactory.parseOperand("NOP",List("GR0", "#1"),"")
+    assertNoGoodOperand(inst,
       "No Good Operands (NOP: GR0,#1)")
 
+    
     assertNoGoodOperand(InstructionFactory.parseOperand("LD",List("#1"),""),
       "No Good Operands (LD: #1)")
 
@@ -98,11 +100,39 @@ class InstructionFactorySpec extends FlatSpec with DiagrammedAssertions {
 
     assertNoGoodOperand(InstructionFactory.parseOperand("RET",List("#1"),""),
       "No Good Operands (RET: #1)")
+
+    assertNoGoodOperand(InstructionFactory.parseOperand("ADDA",List("GR1", "9999999999999999"),""),
+      "No Good Operands (ADDA: GR1,9999999999999999)")
+
+    assertNoGoodOperand(InstructionFactory.parseOperand("ADDA",List("GR1", "9999999999999999", "GR2"),""),
+      "No Good Operands (ADDA: GR1,9999999999999999,GR2)")
+
+    assertNoGoodOperand(InstructionFactory.parseOperand("JUMP",List("9999999999999999", "GR2"),""),
+      "No Good Operands (JUMP: 9999999999999999,GR2)")
+
+    assertNoGoodOperand(InstructionFactory.parseOperand("JUMP",List("9999999999999999"),""),
+      "No Good Operands (JUMP: 9999999999999999)")
+
+    val errConst = List.fill(2001)("A").mkString("")
+    assertNoGoodOperand(InstructionFactory.parseOperand("DC",List("'" + errConst + "'"),""),
+      s"No Good Operands (DC: '$errConst')")
+
+    assertNoGoodOperand(InstructionFactory.parseOperand("DC",List("9ABCDEFG"),""),
+      s"No Good Operands (DC: 9ABCDEFG)")
+
+    assertNoGoodOperand(InstructionFactory.parseOperand("DC",List("#FFFFFFFFFFFFFFF"),""),
+      s"No Good Operands (DC: #FFFFFFFFFFFFFFF)")
+
+    assertNoGoodOperand(InstructionFactory.parseOperand("AAA",List("9999999999999999"),""),
+      "Unsupported Instruction (AAA: 9999999999999999)")
+
+    assertThrows[IllegalArgumentException] {
+      InstructionFactory.parseOperand("ADDA", List("GR1", "=LBL", "GR2"), "")
+    }
   }
 
   
   def assertNoGoodOperand(either: Either[String, Instruction], errMsg: String): Unit = {
     assert(either.left.get === errMsg)
-
   }
 }

@@ -1,13 +1,18 @@
-ADDER    START
+ADDER    START   BEGIN
+BEGIN    NOP
          LD      GR0, NUM1
          LD      GR1, NUM1
+LOOP     NOP
          ADDA    GR0, GR1
-         ADDA    GR0, NUM2  ; 0x30 + 0x02 = 0x32 (ASCII : '2')
-         ST      GR0, #10   ; Store For Output
-         OUT     OUT, LEN
+         LD      GR3, GR0
+         SUBA    GR3, =5
+         JNZ     LOOP
+         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')
+         ST      GR0, OUTPUT ; Store For Output
+         OUT     OUTPUT, LEN
          RET
 NUM1     DC      1
 NUM2     DC      #30
 LEN      DC      1
-OUT      DS      1
+OUTPUT   DS      1
          END

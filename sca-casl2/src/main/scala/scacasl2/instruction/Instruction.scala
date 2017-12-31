@@ -51,6 +51,8 @@ trait Instruction {
     this.ope match {
       case o: OperandStart => {
         if (o.l.isDefined) {
+          
+          println(scope + "." + o.l.get.name)
           symbolTbl
             .get(scope + "." + o.l.get.name)
             .map { adr_value =>

@@ -148,7 +148,7 @@ object InstructionFactory {
                    scope: String): Either[String, Instruction] = {
     if (INSTRUCTION_ANALYZE_MAP.contains(code)) {
       INSTRUCTION_ANALYZE_MAP(code)(code, operands, scope)
-    } else Left(ERR_UNSUPPORTED_OPERATION_CODE + s"($code, $operands)")
+    } else Left(ERR_UNSUPPORTED_OPERATION_CODE + s" ($code: ${operands.mkString(",")})")
   }
 
   /*--------------------------------------------
@@ -197,7 +197,9 @@ object InstructionFactory {
       if (operands.isEmpty) Left(ERR_NO_GOOD_OPERAND + s"(${code} )")
       else {
         val elements = operands.map(element => analyzeConstants(element))
-        Right(AssemblyInstruction(code, OperandDc(elements), info, scope))
+        if(elements.exists(e => e.isInstanceOf[IncorrectDescription])){
+          Left(ERR_NO_GOOD_OPERAND + s" (${code}: ${operands.mkString(",")})")
+        }else Right(AssemblyInstruction(code, OperandDc(elements), info, scope))
       }
     }
 
@@ -227,16 +229,12 @@ object InstructionFactory {
   private def analyzeMachineInstruction =
     (code: String, operands: List[String], scope: String) => {
       analyzeMachineOperands(operands)
-        .map {
-          case ope: Operand => {
-            this.createMachineInstruction(code, ope, scope).map { mi =>
+        .map { ope =>
+          this.createMachineInstruction(code, ope, scope).map { mi =>
               this.validCodeAndOperand(mi).map { m =>
                 Right(m)
               }.getOrElse(Left(ERR_NO_GOOD_OPERAND + s" ($code: ${operands.mkString(",")})"))
             }.getOrElse(Left(ERR_NO_GOOD_OPERAND + s" ($code: ${operands.mkString(",")})"))
-          }
-          case _ =>
-            Left(ERR_NO_GOOD_OPERAND + s" ($code: ${operands.mkString(",")})")
         }
         .getOrElse(Left(
           ERR_NO_GOOD_OPERAND + s" ($code: ${operands.mkString(",")})"))
@@ -403,59 +401,59 @@ object InstructionFactory {
   private def validCodeAndOperand(mi: MachineInstruction): Option[Instruction] = {
     (mi.code, mi.ope) match {
       case (MachineInstruction.NOP, _ : OperandNoArg) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.LD2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.ST , _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.LAD, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.LD1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.ADDA2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SUBA2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.ADDL2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SUBL2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.ADDA1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SUBA1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.ADDL1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SUBL1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.AND2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.OR2,  _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.XOR2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.AND1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.OR1,  _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.XOR1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.CPA2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.CPL2, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.CPA1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.CPL1, _ : OperandR1R2) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SLA, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SRA, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SLL, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SRL, _ : OperandR_ADR_X) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case 
         (MachineInstruction.JMI  |
          MachineInstruction.JNZ  |
@@ -463,20 +461,33 @@ object InstructionFactory {
          MachineInstruction.JUMP |
          MachineInstruction.JPL  |
          MachineInstruction.JOV  , 
-        (_ : OperandADR_X | _ : OperandADR)) => Some(mi)
+        (_ : OperandADR_X | _ : OperandADR)) => validIncorrectDescription(mi)
       case (MachineInstruction.PUSH,
-        (_ : OperandADR_X | _ : OperandADR)) => Some(mi)
+        (_ : OperandADR_X | _ : OperandADR)) => validIncorrectDescription(mi)
       case (MachineInstruction.POP , _ : OperandR) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.CALL,
-        (_ : OperandADR_X | _ : OperandADR)) => Some(mi)
+        (_ : OperandADR_X | _ : OperandADR)) => validIncorrectDescription(mi)
       case (MachineInstruction.RET , _ : OperandNoArg) =>
-        Some(mi)
+        validIncorrectDescription(mi)
       case (MachineInstruction.SVC ,
-        (_ : OperandADR_X | _ : OperandADR)) => Some(mi)
+        (_ : OperandADR_X | _ : OperandADR)) => validIncorrectDescription(mi)
       case _ => None
     }
   }
 
+  private def validIncorrectDescription(mi: MachineInstruction): Option[Instruction] = {
+    val add = mi.ope match {
+      case ope: OperandADR     => List(ope.address)
+      case ope: OperandR_ADR_X => List(ope.address)
+      // case ope: OperandDc      => ope.consts // Not MachineInstruction
+      case ope: OperandADR_X   => List(ope.address)
+      case _ => List.empty
+    }
+
+    if(add.exists(e => e.isInstanceOf[IncorrectDescription])){
+      None
+    } else Some(mi)
+  }
 
 }

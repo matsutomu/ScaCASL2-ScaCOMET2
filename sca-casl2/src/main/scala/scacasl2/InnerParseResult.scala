@@ -26,6 +26,19 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
 
 
   /**
+   * CASL2 check Start for current scope
+   * @return
+   */
+  private def checkFirst(line: InstructionLine): InnerParseResult = {
+    if (line.code == AssemblyInstruction.START && this.currentScope.isEmpty)
+      this.copy(currentScope = line.lbl.getOrElse(""))
+    else 
+      this.copy()
+  }
+    
+  
+
+  /**
    * Parse Line and Results convert InnerParseResult(this)
    *
    * @param line is ProgramLine
@@ -33,7 +46,7 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
    */
   def parseEachLine(line: ProgramLine): InnerParseResult = line match {
     case _: CommentLine     => this.copy(lineNumber = this.lineNumber + 1)
-    case r: InstructionLine => this.convertForEqualConstants(r.operands, this.currentScope).parseInstructionLine(r)
+    case r: InstructionLine => this.checkFirst(r).convertForEqualConstants(r.operands, this.currentScope).parseInstructionLine(r)
   }
 
   /**
@@ -100,8 +113,12 @@ private[scacasl2] case class InnerParseResult(lineNumber: Int,
    * @return
    */
   private def createNewSymbol(instructionLine: InstructionLine): Option[Map[String, Int]] = {
-    if (instructionLine.lbl.isDefined && this.isValid)
-      Some(Map(this.currentScope + "." + instructionLine.lbl.get -> this.instStepCounter))
+    if (instructionLine.lbl.isDefined && this.isValid){
+      if(this.currentScope == instructionLine.lbl.get) // global start
+        Some(Map("." + instructionLine.lbl.get -> this.instStepCounter))
+      else
+        Some(Map(this.currentScope + "." + instructionLine.lbl.get -> this.instStepCounter))
+    }
     else None
   }
 

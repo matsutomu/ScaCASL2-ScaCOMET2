@@ -424,7 +424,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "COUNT1"),  // 0 word
       MachineInstruction("PUSH", OperandADR_X(AddressOfOperand("0", 0), 1), InstructionFactory.INSTRUCTION_INF_MAP("PUSH"), "COUNT1"), // 2 word
       MachineInstruction("PUSH", OperandADR_X(AddressOfOperand("0", 0), 2), InstructionFactory.INSTRUCTION_INF_MAP("PUSH"), "COUNT1"), // 2 word
       MachineInstruction("SUBA1", OperandR1R2(2, 2), InstructionFactory.INSTRUCTION_INF_MAP("SUBA1"), "COUNT1"), // 1 word
@@ -479,7 +479,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 1 word
@@ -557,7 +557,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "TEST1"),  // 0 word
       MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"TEST1"), // 3 word
       AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "TEST1"),  // 0 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), ""), // 1 word
@@ -614,7 +614,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "TEST1"),  // 0 word
       MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"TEST1"), // 3 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"TEST1"), // 1 word
       MachineInstruction("RET", OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "TEST1"), // 1 word
@@ -644,7 +644,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("BUFF1", None), LabelOfOperand("LEN", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsNumOfOperand("5",5))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 1 word
@@ -706,7 +706,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("EL2C1", None), LabelOfOperand("EL2C2", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 6 word
@@ -747,7 +747,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       //MacroInstruction("OUT",  OperandInOrOut(List(LabelOfOperand("EL2C1", None), LabelOfOperand("EL2C2", None))), InstructionFactory.INSTRUCTION_INF_MAP("OUT"),"SOUT1"), // 3 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
       AssemblyInstruction("DC",  OperandDc(List(ConstsStringOfOperand("'COMET2'", List('C','O','M','E','T','2')))) , InstructionFactory.INSTRUCTION_INF_MAP("DC"),"SOUT1"), // 6 word
@@ -777,7 +777,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
       AssemblyInstruction("DS",  OperandDs(0) , InstructionFactory.INSTRUCTION_INF_MAP("DS"),"SOUT1"), // 0 word
       AssemblyInstruction("DS",  OperandDs(5) , InstructionFactory.INSTRUCTION_INF_MAP("DS"),"SOUT1"), // 5 word
@@ -818,7 +818,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
       AssemblyInstruction("DS",  OperandDs(2000) , InstructionFactory.INSTRUCTION_INF_MAP("DS"),"SOUT1"), // 5 word
     )
@@ -843,7 +843,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
     )
 
@@ -868,7 +868,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
     )
 
@@ -891,7 +891,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
-      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), ""),  // 0 word
+      AssemblyInstruction("START", OperandStart(None), InstructionFactory.INSTRUCTION_INF_MAP("START"), "SOUT1"),  // 0 word
       MachineInstruction("RET"  , OperandNoArg(), InstructionFactory.INSTRUCTION_INF_MAP("RET"), "SOUT1"), // 1 word
     )
 
@@ -902,6 +902,70 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     )
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)
+  }
+
+  it should " parse sample instructions (LABEL replace) " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "BEGIN    NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "LOOP     NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP",
+      "         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM1     DC      1",
+      "NUM2     DC      #30",
+      "LEN      DC      1",
+      "OUTPUT   DS      1",
+      "         END"
+    )
+    
+    val result = ProgramLineParser.parseFirst(programLines)
+
+    val answer = List(
+        AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))), InstructionFactory.INSTRUCTION_INF_MAP("START"), "ADDER"), 
+        MachineInstruction("NOP",OperandNoArg(),InstructionFactory.INSTRUCTION_INF_MAP("NOP"), "ADDER"), 
+        MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionFactory.INSTRUCTION_INF_MAP("LD2"), "ADDER"), 
+        MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionFactory.INSTRUCTION_INF_MAP("LD2"), "ADDER"), 
+        MachineInstruction("NOP",OperandNoArg(),InstructionFactory.INSTRUCTION_INF_MAP("NOP"), "ADDER"), 
+        MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionFactory.INSTRUCTION_INF_MAP("ADDA1"), "ADDER"), 
+        MachineInstruction("LD1",OperandR1R2(3,0),InstructionFactory.INSTRUCTION_INF_MAP("LD1"), "ADDER"), 
+        MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL8C2",None),0),InstructionFactory.INSTRUCTION_INF_MAP("SUBA2"), "ADDER"), 
+        MachineInstruction("JNZ",OperandADR(LabelOfOperand("LOOP",None)),InstructionFactory.INSTRUCTION_INF_MAP("JNZ"), "ADDER"), 
+        MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM2",None),0),InstructionFactory.INSTRUCTION_INF_MAP("ADDA2"), "ADDER"), 
+        MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionFactory.INSTRUCTION_INF_MAP("ST"), "ADDER"), 
+        MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionFactory.INSTRUCTION_INF_MAP("OUT"), "ADDER"), 
+        MachineInstruction("RET",OperandNoArg(),InstructionFactory.INSTRUCTION_INF_MAP("RET"), "ADDER"), 
+        AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionFactory.INSTRUCTION_INF_MAP("DC"), "ADDER"), 
+        AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionFactory.INSTRUCTION_INF_MAP("DC"), "ADDER"),
+        AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionFactory.INSTRUCTION_INF_MAP("DC"), "ADDER"),
+        AssemblyInstruction("DS",OperandDs(1),InstructionFactory.INSTRUCTION_INF_MAP("DC"), "ADDER"),
+        AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionFactory.INSTRUCTION_INF_MAP("DC"), "ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.LOOP" -> 5, 
+      "ADDER.BEGIN" -> 0, 
+      "ADDER.NUM1" -> 20, 
+      "ADDER.EL8C2" -> 24, 
+      "ADDER.NUM2" -> 21, 
+      "ADDER.OUTPUT" -> 23, 
+      "ADDER.LEN" -> 22, 
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+
+
   }
 
 

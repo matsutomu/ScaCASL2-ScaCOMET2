@@ -104,7 +104,7 @@ object ScaCasl2 {
       val f1 = File(options.casFileName)
       if (f1.exists) {
         val result = ProgramLineParser.parseFirst(f1.lines.toList)
-        if (result.errors.isEmpty) {
+        if (result.isValid) {
           val binaryData = ProgramLineParser.convertBinaryCode(
             result.instructionModels,
             result.symbolTable)
