@@ -40,7 +40,9 @@ object ScaComet2 {
       |st            Dump 128 words of stack image.""".stripMargin
 
   /*** constants ***/
-  val CODE_START_POS  = 8
+  val CASL_FILE_PREFIX  = 8
+  val CASL_LITERAL  = 2
+  val CASL_START_PR_INDEX  = 2 // start 0
   val OCTET = 8
   val DUMP_LINE_COUNT = 16
 
@@ -72,7 +74,7 @@ object ScaComet2 {
               case Right(l) => {
                 println(s"done.")
                 //l.copyToArray(objM.memory, 0, l.length)
-                machine.storeToMemory(l.toArray)
+                machine.storeToMemory(l.startPr, l.binaryData.toArray)
 
                 this.running = true
                 options.watchVariables.foreach(machine.addWatch)
@@ -218,13 +220,15 @@ object ScaComet2 {
   }
 
 
+  case class BinaryData(startPr: Int, binaryData: List[Int])
+  
   /**
    * Assembly File Convert To Binary Data
    *
    * @param file
    * @return
    */
-  def load(file: File): Either[String, List[Int]] = {
+  def load(file: File): Either[String, BinaryData] = {
 
     if(file.size != 0) {
       val buffByte = file.byteArray
@@ -235,9 +239,8 @@ object ScaComet2 {
           val e = it.next()
           buffInt.append(((e(0) & 0x000000ff) << 8) | (e(1) & 0x000000ff))
         }
-        if(buffInt.take(CODE_START_POS).toList ==
-          List(0x4341, 0x534C, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000)) // CASL
-          Right(buffInt.drop(CODE_START_POS).toList)
+        if(buffInt.take(CASL_LITERAL).toList == List(0x4341, 0x534C)) // CASL
+          Right(BinaryData(buffInt(CASL_START_PR_INDEX), buffInt.drop(CASL_FILE_PREFIX).toList))
         else
           Left(s"no CASLII file: ${file.path}")
       } else {

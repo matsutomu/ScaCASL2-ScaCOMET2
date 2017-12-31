@@ -42,6 +42,26 @@ trait Instruction {
 
   /**
    * get word array[Int]. 32bit length.
+   * 
+   * ex.
+   *   MAIN START BEGIN 
+   *   ↓ Int(= 32bit)
+   *   '0000 0000 0000 0000 ' '0100 0011' (= 'C') + '0100 0001' (= 'A') 
+   *   '0000 0000 0000 0000 ' '0101 0011' (= 'S') + '0100 1100' (= 'L') 
+   *   '0000 0000 0000 0000 ' '0123 4567 89AB CDEF' (= address value) 
+   *   '0000 0000 0000 0000 ' '0000 0000 0000 0000' (= Filler1) 
+   *   '0000 0000 0000 0000 ' '0000 0000 0000 0000' (= Filler2) 
+   *   '0000 0000 0000 0000 ' '0000 0000 0000 0000' (= Filler3) 
+   *   '0000 0000 0000 0000 ' '0000 0000 0000 0000' (= Filler4) 
+   *   '0000 0000 0000 0000 ' '0000 0000 0000 0000' (= Filler5) 
+   *   
+   *   RET
+   *   '0000 0000 0000 0000 ' '1000 0001' (= 0x81) + '0000 0000' (= all 0) 
+   *
+   *   ADDA GR1, GR2
+   *   '0000 0000 0000 0000 ' '0010 0100' (= 0x24) + '0001 0002' (= GR1 , GR2)
+   *   
+   *   
    *
    * @param symbolTbl for LABEL to Address
    * @return
@@ -51,8 +71,6 @@ trait Instruction {
     this.ope match {
       case o: OperandStart => {
         if (o.l.isDefined) {
-          
-          println(scope + "." + o.l.get.name)
           symbolTbl
             .get(scope + "." + o.l.get.name)
             .map { adr_value =>

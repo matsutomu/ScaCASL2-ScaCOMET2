@@ -13,8 +13,9 @@ class Machine {
   //
   private[scacomet2] var memory = new Array[Int](65536)
 
-  def storeToMemory(binaries: Array[Int]): Unit = {
+  def storeToMemory(startPr: Int, binaries: Array[Int]): Unit = {
     this.programRunning = true
+    this.PR.word = startPr
     binaries.copyToArray(this.memory, 0, binaries.length)
   }
 

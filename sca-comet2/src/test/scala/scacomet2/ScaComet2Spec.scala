@@ -4,6 +4,7 @@ import java.io.{ByteArrayOutputStream, PrintStream, StringReader}
 
 import org.scalatest._
 import scacomet2.ScaComet2.CLIOptions
+import scacomet2.ScaComet2.BinaryData
 
 
 class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
@@ -142,9 +143,9 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     val f1 = better.files.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     assert(ScaComet2.load(f1)
-      === Right(List(0x7001,    0,   0x7002,   0,0x2522, 0x3411,
+      === Right(BinaryData(0, List(0x7001,    0,   0x7002,   0,0x2522, 0x3411,
         0x6300,    0x000F, 0x1222, 0x0001, 0x1201,0xFFFF, 0x3410,
-        0x6300, 0x0008, 0x1402, 0x7120, 0x7110,0x8100)))
+        0x6300, 0x0008, 0x1402, 0x7120, 0x7110,0x8100))))
   }
 
   it should " loading error binary data " in {
@@ -271,6 +272,21 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
   }
 
+  "ScaComet2 " should " load start address " in {
+
+    // load from file
+    val path = getClass.getClassLoader.getResource("start_address.com").getPath
+    val f1 = better.files.File(path)
+    // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
+    val result = ScaComet2.load(f1)
+
+    val machine = new Machine
+    //result.map( l => l.copyToArray(machine.memory, 0, l.length))
+    result.map(e => machine.storeToMemory(e.startPr, e.binaryData.toArray))
+
+
+  }
+
   "ScaComet2 memory " should " dump to any type " in {
 
     // load from file
@@ -278,16 +294,17 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     val f1 = better.files.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     val result = ScaComet2.load(f1)
-    assert(result === Right(List(
+    assert(result === Right(BinaryData(0,
+      List(
       0x7001, 0x0000, 0x7002, 0x0000,
       0x2522, 0x3411, 0x6300, 0x000F,
       0x1222, 0x0001, 0x1201, 0xFFFF,
       0x3410, 0x6300, 0x0008, 0x1402,
-      0x7120, 0x7110, 0x8100)))
+      0x7120, 0x7110, 0x8100))))
 
     val machine = new Machine
     //result.map( l => l.copyToArray(machine.memory, 0, l.length))
-    result.map(e => machine.storeToMemory(e.toArray))
+    result.map(e => machine.storeToMemory(e.startPr, e.binaryData.toArray))
 
     assert(ScaComet2.dumpMemory(machine, 0, 4) ===
           List("""#0000 : #7001 #0000 #7002 #0000 #2522 #3411 #6300 #000F ...."...""",
@@ -321,9 +338,6 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
         """#0018 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........""",
         """#0020 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........""")
         ::: fillList2)
-
-
-
   }
 
   "ScaComet2 Registers " should " print status " in {
@@ -333,16 +347,17 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     val f1 = better.files.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     val result = ScaComet2.load(f1)
-    assert(result === Right(List(
+    assert(result === Right(BinaryData(0,
+      List(
       0x7001, 0x0000, 0x7002, 0x0000,
       0x2522, 0x3411, 0x6300, 0x000F,
       0x1222, 0x0001, 0x1201, 0xFFFF,
       0x3410, 0x6300, 0x0008, 0x1402,
-      0x7120, 0x7110, 0x8100)))
+      0x7120, 0x7110, 0x8100))))
 
     val machine = new Machine
     //result.map( l => l.copyToArray(machine.memory, 0, l.length))
-    result.map(e => machine.storeToMemory(e.toArray))
+    result.map(e => machine.storeToMemory(e.startPr, e.binaryData.toArray))
 
     assert(machine.statusInfo() ===
       List("PR #0000 [ #0000: #7001 #0000         PUSH     #0000, GR1 ]  STEP 0",
@@ -359,16 +374,17 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     val f1 = better.files.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     val result = ScaComet2.load(f1)
-    assert(result === Right(List(
+    assert(result === Right(BinaryData(0,
+      List(
       0x7001, 0x0000, 0x7002, 0x0000,
       0x2522, 0x3411, 0x6300, 0x000F,
       0x1222, 0x0001, 0x1201, 0xFFFF,
       0x3410, 0x6300, 0x0008, 0x1402,
-      0x7120, 0x7110, 0x8100)))
+      0x7120, 0x7110, 0x8100))))
 
     val machine = new Machine
     //result.map( l => l.copyToArray(machine.memory, 0, l.length))
-    result.map(e => machine.storeToMemory(e.toArray))
+    result.map(e => machine.storeToMemory(e.startPr, e.binaryData.toArray))
 
     // fill
     val fillList = (5 to (0xffff / 8)).toList.map { case i =>

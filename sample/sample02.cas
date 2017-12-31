@@ -1,4 +1,6 @@
 ADDER    START   BEGIN
+         AND     GR3, GR3   ; for unit test
+         AND     GR4, GR4   ; for unit test
 BEGIN    NOP
          LD      GR0, NUM1
          LD      GR1, NUM1
@@ -7,6 +9,10 @@ LOOP     NOP
          LD      GR3, GR0
          SUBA    GR3, =5
          JNZ     LOOP
+         JUMP    #10
+         NOP
+         JUMP    #14
+         NOP
          ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')
          ST      GR0, OUTPUT ; Store For Output
          OUT     OUTPUT, LEN
@@ -15,4 +21,5 @@ NUM1     DC      1
 NUM2     DC      #30
 LEN      DC      1
 OUTPUT   DS      1
+NUM3     DC      NUM2
          END
