@@ -119,7 +119,8 @@ object ScaComet2 {
    */
   def parseArgs(args: Array[String]): CLIOptions = {
 
-    var cliCommand: CliCommand = CliCommand.Run
+    var cliCommand: CliCommand = 
+      if(args.isEmpty) CliCommand.InputError else CliCommand.Run
     var countStep = false
     var dump = false
     var watch = false
@@ -207,15 +208,15 @@ object ScaComet2 {
    */
   def run(machine: Machine, watch: Boolean = false, watchDecimal: Boolean = false): Unit = {
 
-      while(this.running){
-        if(machine.containsBreakPoint(machine.PR.word)){
-          this.running = false
-        } else {
-          if(watch){
+      while(this.running && !machine.containsBreakPoint(machine.PR.word)){
+        if(watch){
             machine.watchInfo(watchDecimal).foreach(println)
-          }
-          this.running = machine.step()
         }
+        this.running = machine.step()
+      }
+    
+      if(machine.containsBreakPoint(machine.PR.word)) {
+        machine.deleteBreakPoint(1) // for run
       }
   }
 
@@ -263,7 +264,6 @@ object ScaComet2 {
       print("ScaComet2>")
       val input = scala.io.StdIn.readLine().split("""\s""")
       val optForWait = parseArgsWaitCommand(input)
-      println("")
       optForWait.command match {
         case WaitForCommand.Quit              => this.running = false
         case WaitForCommand.AddBreakPoints    => optForWait.breakPoints.foreach(machine.addBreakPoint)
@@ -277,7 +277,9 @@ object ScaComet2 {
             machine.memory(address) = value
           }
         }
-        case WaitForCommand.Run           => this.run(machine)
+        case WaitForCommand.Run           => {
+          this.run(machine)
+        }
         case WaitForCommand.Step          => this.running = machine.step()
         case WaitForCommand.PrintStatus   => machine.statusInfo.foreach(println(_))
         case WaitForCommand.Disassemble   => machine.disassemble(optForWait.targetAddress1.getOrElse(0x0000), 16).foreach(println)

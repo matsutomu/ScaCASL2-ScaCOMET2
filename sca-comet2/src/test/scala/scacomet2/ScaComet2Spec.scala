@@ -75,7 +75,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
   "ScaComet2 main parameter parser " should " parse argument for CLI Commands " in {
     assert(ScaComet2.parseArgs(Array.empty[String]) ===
-      CLIOptions(CliCommand.Run,false,false,false,List(),false,List()))
+      CLIOptions(CliCommand.InputError,false,false,false,List(),false,List()))
 
     assert(ScaComet2.parseArgs(Array("-h")) ===
       CLIOptions(CliCommand.Help,false,false,false,List(),false,List()))
@@ -440,12 +440,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     assert(consoleOut ===
       f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
         """|done.
-           |ScaComet2>
-           |ScaComet2>
-           |ScaComet2>
-           |ScaComet2>
-           |ScaComet2>
-           |#0001: #0000               NOP
+           |ScaComet2>ScaComet2>ScaComet2>ScaComet2>ScaComet2>#0001: #0000               NOP
            |#0002: #7002 #0000         PUSH     #0000, GR2
            |#0004: #2522               SUBA     GR2, GR2
            |#0005: #3411               AND      GR1, GR1
@@ -461,8 +456,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
            |#0013: #0000               NOP
            |#0014: #0000               NOP
            |#0015: #0000               NOP
-           |ScaComet2>
-           |#0001 : #0000 #7002 #0000 #2522 #3411 #6300 #000F #1222 ..."..."
+           |ScaComet2>#0001 : #0000 #7002 #0000 #2522 #3411 #6300 #000F #1222 ..."..."
            |#0009 : #0001 #1201 #FFFF #3410 #6300 #0008 #1402 #7120 .......
            |#0011 : #7110 #8100 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#0019 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
@@ -479,8 +473,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
            |#0071 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#0079 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#0081 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
-           |ScaComet2>
-           |b ADDR        Set a breakpoint at specified address.
+           |ScaComet2>b ADDR        Set a breakpoint at specified address.
            |d NUM         Delete breakpoints.
            |di ADDR       Disassemble 32 words from specified address.
            |du ADDR       Dump 128 words of memory.
@@ -493,19 +486,13 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
            |r             Strat execution of program.
            |s             Step execution.
            |st            Dump 128 words of stack image.
-           |ScaComet2>
-           |   1 : #0002
+           |ScaComet2>   1 : #0002
            |   2 : #0006
-           |ScaComet2>
-           |ScaComet2>
-           |ScaComet2>
-           |PR #0000 [ #0000: #7001 #0000         PUSH     #0000, GR1 ]  STEP 0
+           |ScaComet2>ScaComet2>ScaComet2>PR #0000 [ #0000: #7001 #0000         PUSH     #0000, GR1 ]  STEP 0
            |SP #FF00(  65280) FR(OF, SF, ZF) 000  (      0)
            |GR0 #0000(      0) GR1 #0000(      0) GR2 #0000(      0) GR3 #0000(      0)
            |GR4 #0000(      0) GR5 #0000(      0) GR6 #0000(      0) GR7 #0000(      0)
-           |ScaComet2>
-           |ScaComet2>
-           |#FEFF : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
+           |ScaComet2>ScaComet2>#FEFF : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#FF07 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#FF0F : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#FF17 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
@@ -522,8 +509,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
            |#FF6F : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#FF77 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#FF7F : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
-           |ScaComet2>
-           |#0000 : #7001 #0000 #7002 #0000 #2522 #3411 #6300 #000F ...."...
+           |ScaComet2>#0000 : #7001 #0000 #7002 #0000 #2522 #3411 #6300 #000F ...."...
            |#0008 : #1222 #0001 #1201 #FFFF #3410 #6300 #0008 #1402 ".......
            |#0010 : #7120 #7110 #8100 #0041 #0000 #0000 #0000 #0000  ..A....
            |#0018 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
@@ -540,8 +526,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
            |#0070 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#0078 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
            |#0080 : #0000 #0000 #0000 #0000 #0000 #0000 #0000 #0000 ........
-           |ScaComet2>
-           |""".stripMargin)
+           |ScaComet2>ScaComet2>""".stripMargin)
 
   }
 

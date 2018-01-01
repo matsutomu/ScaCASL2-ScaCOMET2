@@ -193,7 +193,6 @@ class Machine {
     *
     */
   def step(): Boolean = {
-    //#todo if finished ?
     this.execute(this.PR.word)
     this.stepCounter = this.stepCounter + 1
 
