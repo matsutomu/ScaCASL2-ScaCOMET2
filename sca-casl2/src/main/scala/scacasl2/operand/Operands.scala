@@ -42,8 +42,8 @@ case class OperandR1R2(r1: Int, r2: Int) extends Operand {
 case class OperandR_ADR_X(r: Int, address: ElementOfAddressOperand, x: Int)
     extends Operand {
   override def disassemble: String = {
-    if(x == 0) f"GR$r%1d, #${address.adrValue}%04X"
-    else  f"GR$r%1d, #${address.adrValue}%04X, GR$x%1d"
+    if (x == 0) f"GR$r%1d, #${address.adrValue}%04X"
+    else f"GR$r%1d, #${address.adrValue}%04X, GR$x%1d"
   }
 
   override def includeLabel: Boolean = address.isInstanceOf[LabelOfOperand]
@@ -65,6 +65,7 @@ case class OperandADR_X(address: ElementOfAddressOperand, x: Int)
   override def includeLabel: Boolean = address.isInstanceOf[LabelOfOperand]
 
 }
+
 /**
   *  Only Address
   *
@@ -72,7 +73,7 @@ case class OperandADR_X(address: ElementOfAddressOperand, x: Int)
   */
 case class OperandADR(address: ElementOfAddressOperand) extends Operand {
 
-  override def disassemble: String   = f"#${address.adrValue}%04X"
+  override def disassemble: String = f"#${address.adrValue}%04X"
 
   override def includeLabel: Boolean = address.isInstanceOf[LabelOfOperand]
 }
@@ -107,13 +108,13 @@ case class OperandInOrOut(ml: List[LabelOfOperand]) extends Operand {
   override def includeLabel: Boolean = true
 }
 
-  /** DS Instruction use.
+/** DS Instruction use.
   *
   * @param decimal Number of words to ensure.
   */
 case class OperandDs(decimal: Int) extends Operand {
-    override def disassemble: String = throw new UnsupportedOperationException
-    override def includeLabel: Boolean = false
+  override def disassemble: String = throw new UnsupportedOperationException
+  override def includeLabel: Boolean = false
 }
 
 /** DC Instruction use.
@@ -123,5 +124,6 @@ case class OperandDs(decimal: Int) extends Operand {
 case class OperandDc(consts: List[ElementOfDcInstruction]) extends Operand {
   override def disassemble: String = throw new UnsupportedOperationException
 
-  override def includeLabel: Boolean = consts.exists(e => e.isInstanceOf[LabelOfOperand])
+  override def includeLabel: Boolean =
+    consts.exists(e => e.isInstanceOf[LabelOfOperand])
 }

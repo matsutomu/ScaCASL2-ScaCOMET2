@@ -27,5 +27,4 @@ object MacroInstruction {
 
   val instructions = Set(IN, OUT, RPUSH, RPOP)
 
-
 }

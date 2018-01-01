@@ -58,12 +58,18 @@ object ProgramLineParser extends RegexParsers {
   /***********************************
     * Parser Combinator
    ***********************************/
-  private def instructions = inst_line_with_ope | inst_line_no_ope | comment_line
+  private def instructions =
+    inst_line_with_ope | inst_line_no_ope | comment_line
 
   private def inst_line_with_ope =
     opt(label) ~ casl_white_space ~ code ~ operands ~ opt(annotation) ^^ {
       case lbl ~ sp1 ~ inst_code ~ opes ~ cmt =>
-        InstructionLine(lbl, inst_code.trim, Some(opes.map(e => e.trim)), cmt, 0, "")
+        InstructionLine(lbl,
+                        inst_code.trim,
+                        Some(opes.map(e => e.trim)),
+                        cmt,
+                        0,
+                        "")
     }
 
   private def inst_line_no_ope =
@@ -72,7 +78,9 @@ object ProgramLineParser extends RegexParsers {
         InstructionLine(lbl, inst_code, None, cmt, 0, "")
     }
 
-  private def comment_line = opt(casl_white_space) ~> annotation ^^ { CommentLine( _ , 0, "") }
+  private def comment_line = opt(casl_white_space) ~> annotation ^^ {
+    CommentLine(_, 0, "")
+  }
 
   private def label = InstructionFactory.REGEX_LABEL.r
 
@@ -93,7 +101,6 @@ object ProgramLineParser extends RegexParsers {
   /**                                                                */
   /**                                                                */
   /*******************************************************************/
-
   /**
     * Parse All Lines. From File.
     *
@@ -102,16 +109,17 @@ object ProgramLineParser extends RegexParsers {
     */
   def parseFirst(codeLines: List[String]): CaslParseResult = {
 
-    codeLines.foldLeft(InnerParseResult.default()) { (result, line) =>
-      this.parseLine(line, result.lineNumber) match {
-        case Right(r)  => result.parseEachLine(r)
-        case Left(msg) => result.appendError("parse error", msg, line)
+    codeLines
+      .foldLeft(InnerParseResult.default()) { (result, line) =>
+        this.parseLine(line, result.lineNumber) match {
+          case Right(r)  => result.parseEachLine(r)
+          case Left(msg) => result.appendError("parse error", msg, line)
+        }
       }
-    }.checkLast()
+      .checkLast()
       .convertCaslParseResult()
 
   }
-
 
   /**
     * Parse Line by scala.util.parsing.combinator
@@ -122,19 +130,25 @@ object ProgramLineParser extends RegexParsers {
     */
   def parseLine(input: String, lineNo: Int): Either[String, ProgramLine] =
     this.parseAll(this.instructions, input) match { // parsing.combinator
-      case Success(result, _) => result match {
-        case r: CommentLine     => Right(CommentLine(r.comment, lineNo, input))
-        case r: InstructionLine =>
-          if (InstructionFactory.existsInstruction(r.code))
-            Right(InstructionLine(r.lbl, r.code, r.operands, r.comment, lineNo, input))
-          else
-            Left(InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE +
-              s"(${r.code}, ${r.operands.getOrElse(List.empty).mkString(",")})")
-      }
+      case Success(result, _) =>
+        result match {
+          case r: CommentLine => Right(CommentLine(r.comment, lineNo, input))
+          case r: InstructionLine =>
+            if (InstructionFactory.existsInstruction(r.code))
+              Right(
+                InstructionLine(r.lbl,
+                                r.code,
+                                r.operands,
+                                r.comment,
+                                lineNo,
+                                input))
+            else
+              Left(InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE +
+                s"(${r.code}, ${r.operands.getOrElse(List.empty).mkString(",")})")
+        }
       case Failure(msg, _) => Left(msg)
       case Error(msg, _)   => Left(msg)
     }
-
 
   /**
     *

@@ -37,8 +37,7 @@ object ScaCasl2 {
     *
     * @param argList
     */
-  case class Options(command: CaslCliCommand,
-                     argList: List[String]) {
+  case class Options(command: CaslCliCommand, argList: List[String]) {
 
     def casFileName: String = argList.head
 
@@ -63,7 +62,7 @@ object ScaCasl2 {
   def parseArgs(args: Array[String]): Options = {
 
     val cliCommand = args.head match {
-      case "-a" => CaslCliCommand.Dump
+      case "-a"               => CaslCliCommand.Dump
       case "-v" | "--version" => CaslCliCommand.Version
       case "-h" | "--help"    => CaslCliCommand.Help
       case option if option.startsWith("-") =>
@@ -105,20 +104,22 @@ object ScaCasl2 {
       if (f1.exists) {
         val result = ProgramLineParser.parseFirst(f1.lines.toList)
         if (result.isValid) {
-          val binaryData = ProgramLineParser.convertBinaryCode(
-            result.instructionModels,
-            result.symbolTable)
-          
-          options.comFileName.map { path =>
-            val fw = File(path)
-            fw.writeByteArray(binaryData.toArray)
-            println(s"[success]output to ${fw.pathAsString}")
-            if (options.command == CaslCliCommand.Dump) {
-              dump(result.instructions, result.symbolTable)
+          val binaryData = ProgramLineParser
+            .convertBinaryCode(result.instructionModels, result.symbolTable)
+
+          options.comFileName
+            .map { path =>
+              val fw = File(path)
+              fw.writeByteArray(binaryData.toArray)
+              println(s"[success]output to ${fw.pathAsString}")
+              if (options.command == CaslCliCommand.Dump) {
+                dump(result.instructions, result.symbolTable)
+              }
             }
-          }.getOrElse(
-            println(s"[error] output parameter error. options(${options.argList.mkString(",")})")
-          )
+            .getOrElse(
+              println(
+                s"[error] output parameter error. options(${options.argList.mkString(",")})")
+            )
 
         } else {
           println(s"[error] It failed to assemble. path:${f1.pathAsString}")
@@ -145,11 +146,13 @@ object ScaCasl2 {
     var addr = 0
     println("Addr\tOp\t\tLine\tSource code")
 
-    for(l      <- instructions.filter(p => p.line.code != "START");
-        (w, i) <- l.model.convertToWords(symbolTbl).zipWithIndex.toList){
+    for (l <- instructions.filter(p => p.line.code != "START");
+         (w, i) <- l.model.convertToWords(symbolTbl).zipWithIndex.toList) {
       val bytecode = intWordToSplitByte(w)
-      println(f"#$addr%04X\t$bytecode" +
-        (if(i == 0) "\t\t" + l.line.line_number + "\t" + l.line.raw_string else ""))
+      println(
+        f"#$addr%04X\t$bytecode" +
+          (if (i == 0) "\t\t" + l.line.line_number + "\t" + l.line.raw_string
+           else ""))
 
       addr = addr + 1
     }
@@ -163,7 +166,7 @@ object ScaCasl2 {
 
   private def intWordToSplitByte(word: Int): String = {
     val (w1, w2) = ((word & 0xff00) >> 8, // **** **** 0000 0000
-               word & 0x00ff) // 0000 0000 **** ****
+                    word & 0x00ff) // 0000 0000 **** ****
     f"#$w1%02X$w2%02X"
   }
 

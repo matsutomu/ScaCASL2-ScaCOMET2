@@ -5,12 +5,9 @@ import better.files.File
 import scala.collection.mutable.ListBuffer
 import scacasl2.Helper
 
-
-
 object ScaComet2 {
 
   /*** messages ***/
-
   private val MSG_VERSION = "COMETII version 0.1 (Scala)"
 
   private val MSG_USAGE = "usage:" + ScaComet2.getClass.getSimpleName + " [options] input.com"
@@ -40,30 +37,29 @@ object ScaComet2 {
       |st            Dump 128 words of stack image.""".stripMargin
 
   /*** constants ***/
-  val CASL_FILE_PREFIX  = 8
-  val CASL_LITERAL  = 2
-  val CASL_START_PR_INDEX  = 2 // start 0
+  val CASL_FILE_PREFIX = 8
+  val CASL_LITERAL = 2
+  val CASL_START_PR_INDEX = 2 // start 0
   val OCTET = 8
   val DUMP_LINE_COUNT = 16
 
   /**
-   * COMETII running control
-   */
+    * COMETII running control
+    */
   private[scacomet2] var running = false
 
-
   /**
-   * COMETII entry point
-   *
-   * @param args
-   */
+    * COMETII entry point
+    *
+    * @param args
+    */
   def main(args: Array[String]): Unit = {
     try {
       val options = parseArgs(args)
       options.cliCommand match {
-        case CliCommand.Version        => println(this.MSG_VERSION)
-        case CliCommand.Help           => println(this.MSG_HELP)
-        case CliCommand.InputError     => println(this.MSG_HELP)
+        case CliCommand.Version    => println(this.MSG_VERSION)
+        case CliCommand.Help       => println(this.MSG_HELP)
+        case CliCommand.InputError => println(this.MSG_HELP)
         case CliCommand.Run | CliCommand.Debug => {
           // #todo file close ?
           val f1 = File(options.comFileName)
@@ -78,16 +74,16 @@ object ScaComet2 {
 
                 this.running = true
                 options.watchVariables.foreach(machine.addWatch)
-                if(options.cliCommand == CliCommand.Run){
+                if (options.cliCommand == CliCommand.Run) {
                   this.run(machine, options.watch, options.decimal)
                 } else {
                   this.waitForCommand(machine)
                 }
 
-                if(options.countStep)
+                if (options.countStep)
                   System.out.println("Step count: " + machine.stepCount)
 
-                if(options.dump)
+                if (options.dump)
                   this.dumpToFile(machine)
 
               }
@@ -108,19 +104,18 @@ object ScaComet2 {
       }
     }
 
-
   }
 
   /**
-   * parse args
-   *
-   * @param args
-   * @return
-   */
+    * parse args
+    *
+    * @param args
+    * @return
+    */
   def parseArgs(args: Array[String]): CLIOptions = {
 
-    var cliCommand: CliCommand = 
-      if(args.isEmpty) CliCommand.InputError else CliCommand.Run
+    var cliCommand: CliCommand =
+      if (args.isEmpty) CliCommand.InputError else CliCommand.Run
     var countStep = false
     var dump = false
     var watch = false
@@ -132,16 +127,17 @@ object ScaComet2 {
     var tempWatchVariable = ""
     for (e <- args) {
       e match {
-        case "-d"  | "--debug" | "-v" | "--version" | "-h" | "--help"
-          if cliCommand != CliCommand.Run   => cliCommand = CliCommand.Help
-        case "-d"  | "--debug"      => cliCommand = CliCommand.Debug
-        case "-v"  | "--version"    => cliCommand = CliCommand.Version
-        case "-h"  | "--help"       => cliCommand = CliCommand.Help
+        case "-d" | "--debug" | "-v" | "--version" | "-h" | "--help"
+            if cliCommand != CliCommand.Run =>
+          cliCommand = CliCommand.Help
+        case "-d" | "--debug"   => cliCommand = CliCommand.Debug
+        case "-v" | "--version" => cliCommand = CliCommand.Version
+        case "-h" | "--help"    => cliCommand = CliCommand.Help
 
-        case "-c"  | "--count-step" => countStep = true
-        case "-du" | "--dump"       => dump      = true
-        case "-D"  | "--decimal"    => decimal   = true
-        case "-w"                   => {
+        case "-c" | "--count-step" => countStep = true
+        case "-du" | "--dump"      => dump = true
+        case "-D" | "--decimal"    => decimal = true
+        case "-w" => {
           watch = true
           before = "-w"
         }
@@ -153,25 +149,39 @@ object ScaComet2 {
           watch = true
           tempWatchVariable = option.substring(WATCH_COMMAND.length)
         }
-        case option if option.startsWith("-") => cliCommand = CliCommand.InputError
+        case option if option.startsWith("-") =>
+          cliCommand = CliCommand.InputError
         case other => tmpArgList += other
       }
     }
 
     this.parseWatchVariable(tempWatchVariable) match {
       case Right(v) =>
-        CLIOptions(cliCommand, countStep, dump, watch, v, decimal, tmpArgList.toList)
-      case Left(e)  =>
-        CLIOptions(CliCommand.InputError, countStep, dump, watch, Nil, decimal, tmpArgList.toList)
+        CLIOptions(cliCommand,
+                   countStep,
+                   dump,
+                   watch,
+                   v,
+                   decimal,
+                   tmpArgList.toList)
+      case Left(e) =>
+        CLIOptions(CliCommand.InputError,
+                   countStep,
+                   dump,
+                   watch,
+                   Nil,
+                   decimal,
+                   tmpArgList.toList)
     }
   }
-
 
   def parseWatchVariable(targets: String): Either[String, List[String]] = {
     val targetList = targets.split(",").map(_.trim.toUpperCase).toList
 
-    if(targets.trim.length == 0) Right(Nil)
-    else if( targetList.filterNot(s => s.matches(Machine.WATCH_VARIABLE_REGS)).size == 0){
+    if (targets.trim.length == 0) Right(Nil)
+    else if (targetList
+               .filterNot(s => s.matches(Machine.WATCH_VARIABLE_REGS))
+               .size == 0) {
       Right(targetList)
     } else {
       Left(s"invalid watch variable: $targets")
@@ -179,14 +189,14 @@ object ScaComet2 {
   }
 
   /**
-   * CLI args convert to Options
-   *
-   * @param cliCommand
-   * @param countStep
-   * @param dump
-   * @param watch
-   * @param argList
-   */
+    * CLI args convert to Options
+    *
+    * @param cliCommand
+    * @param countStep
+    * @param dump
+    * @param watch
+    * @param argList
+    */
   case class CLIOptions(cliCommand: CliCommand,
                         countStep: Boolean,
                         dump: Boolean,
@@ -200,48 +210,51 @@ object ScaComet2 {
   }
 
   /**
-   * Loaded program run
-   *
-   * @param machine
-   * @param watch
-   * @param watchDecimal
-   */
-  def run(machine: Machine, watch: Boolean = false, watchDecimal: Boolean = false): Unit = {
+    * Loaded program run
+    *
+    * @param machine
+    * @param watch
+    * @param watchDecimal
+    */
+  def run(machine: Machine,
+          watch: Boolean = false,
+          watchDecimal: Boolean = false): Unit = {
 
-      while(this.running && !machine.containsBreakPoint(machine.PR.word)){
-        if(watch){
-            machine.watchInfo(watchDecimal).foreach(println)
-        }
-        this.running = machine.step()
+    while (this.running && !machine.containsBreakPoint(machine.PR.word)) {
+      if (watch) {
+        machine.watchInfo(watchDecimal).foreach(println)
       }
-    
-      if(machine.containsBreakPoint(machine.PR.word)) {
-        machine.deleteBreakPoint(1) // for run
-      }
+      this.running = machine.step()
+    }
+
+    if (machine.containsBreakPoint(machine.PR.word)) {
+      machine.deleteBreakPoint(1) // for run
+    }
   }
 
-
   case class BinaryData(startPr: Int, binaryData: List[Int])
-  
+
   /**
-   * Assembly File Convert To Binary Data
-   *
-   * @param file
-   * @return
-   */
+    * Assembly File Convert To Binary Data
+    *
+    * @param file
+    * @return
+    */
   def load(file: File): Either[String, BinaryData] = {
 
-    if(file.size != 0) {
+    if (file.size != 0) {
       val buffByte = file.byteArray
-      if(buffByte.size % 2 == 0){ // 1 word = 16 bit = 2 * 1 Byte
+      if (buffByte.size % 2 == 0) { // 1 word = 16 bit = 2 * 1 Byte
         val buffInt = new ListBuffer[Int]
         val it = buffByte.grouped(2)
-        while(it.hasNext) {
+        while (it.hasNext) {
           val e = it.next()
           buffInt.append(((e(0) & 0x000000ff) << 8) | (e(1) & 0x000000ff))
         }
-        if(buffInt.take(CASL_LITERAL).toList == List(0x4341, 0x534C)) // CASL
-          Right(BinaryData(buffInt(CASL_START_PR_INDEX), buffInt.drop(CASL_FILE_PREFIX).toList))
+        if (buffInt.take(CASL_LITERAL).toList == List(0x4341, 0x534C)) // CASL
+          Right(
+            BinaryData(buffInt(CASL_START_PR_INDEX),
+                       buffInt.drop(CASL_FILE_PREFIX).toList))
         else
           Left(s"no CASLII file: ${file.path}")
       } else {
@@ -253,41 +266,51 @@ object ScaComet2 {
 
   }
 
-
   /**
-   *
-   * @param machine
-   */
+    *
+    * @param machine
+    */
   def waitForCommand(machine: Machine): Unit = {
 
-    while(this.running){
+    while (this.running) {
       print("ScaComet2>")
       val input = scala.io.StdIn.readLine().split("""\s""")
       val optForWait = parseArgsWaitCommand(input)
       optForWait.command match {
-        case WaitForCommand.Quit              => this.running = false
-        case WaitForCommand.AddBreakPoints    => optForWait.breakPoints.foreach(machine.addBreakPoint)
-        case WaitForCommand.DeleteBreakPoints => optForWait.breakPointIndexes.foreach(machine.deleteBreakPoint)
-        case WaitForCommand.PrintBreakPoints  => machine.breakPointInfo.foreach(println)
-        case WaitForCommand.JumpToAddress     => optForWait.targetAddress1.map { address =>
-          machine.PR.word = address
-        }
-        case WaitForCommand.WriteMemory       => optForWait.targetAddress1.map { address =>
-          optForWait.targetAddress2.map { value =>
-            machine.memory(address) = value
+        case WaitForCommand.Quit => this.running = false
+        case WaitForCommand.AddBreakPoints =>
+          optForWait.breakPoints.foreach(machine.addBreakPoint)
+        case WaitForCommand.DeleteBreakPoints =>
+          optForWait.breakPointIndexes.foreach(machine.deleteBreakPoint)
+        case WaitForCommand.PrintBreakPoints =>
+          machine.breakPointInfo.foreach(println)
+        case WaitForCommand.JumpToAddress =>
+          optForWait.targetAddress1.map { address =>
+            machine.PR.word = address
           }
-        }
-        case WaitForCommand.Run           => {
+        case WaitForCommand.WriteMemory =>
+          optForWait.targetAddress1.map { address =>
+            optForWait.targetAddress2.map { value =>
+              machine.memory(address) = value
+            }
+          }
+        case WaitForCommand.Run => {
           this.run(machine)
         }
-        case WaitForCommand.Step          => this.running = machine.step()
-        case WaitForCommand.PrintStatus   => machine.statusInfo.foreach(println(_))
-        case WaitForCommand.Disassemble   => machine.disassemble(optForWait.targetAddress1.getOrElse(0x0000), 16).foreach(println)
-        case WaitForCommand.DumpToConsole => this.dump(machine, optForWait.targetAddress1.get).foreach(println(_))
-        case WaitForCommand.DumpToFile    => {
+        case WaitForCommand.Step => this.running = machine.step()
+        case WaitForCommand.PrintStatus =>
+          machine.statusInfo.foreach(println(_))
+        case WaitForCommand.Disassemble =>
+          machine
+            .disassemble(optForWait.targetAddress1.getOrElse(0x0000), 16)
+            .foreach(println)
+        case WaitForCommand.DumpToConsole =>
+          this.dump(machine, optForWait.targetAddress1.get).foreach(println(_))
+        case WaitForCommand.DumpToFile => {
           this.dumpToFile(machine)
         }
-        case WaitForCommand.DumpStack => this.dump(machine, machine.SP.word).foreach(println(_))
+        case WaitForCommand.DumpStack =>
+          this.dump(machine, machine.SP.word).foreach(println(_))
         case WaitForCommand.PrintHelp => println(this.MSG_HELP_FOR_WAIT_LOOP)
         case WaitForCommand.Retry     => println(this.MSG_HELP_FOR_WAIT_LOOP)
       }
@@ -295,95 +318,127 @@ object ScaComet2 {
   }
 
   /**
-   * Wait Loop  Parse Input Command
-   *
-   * @param args
-   * @return
-   */
+    * Wait Loop  Parse Input Command
+    *
+    * @param args
+    * @return
+    */
   def parseArgsWaitCommand(args: Array[String]) = {
 
-    val (cmd: WaitForCommand, bp: List[Int], bpi: List[Int], add1: Option[Int], add2: Option[Int]) =
+    val (cmd: WaitForCommand,
+         bp: List[Int],
+         bpi: List[Int],
+         add1: Option[Int],
+         add2: Option[Int]) =
       //#todo no good - Nil, Array.empty, null . but "Array()" is Ok.
       (args.head, args.tail) match {
         case ("s", Array()) => (WaitForCommand.Step, Nil, Nil, None, None)
         case ("q", Array()) => (WaitForCommand.Quit, Nil, Nil, None, None)
 
-        case ("b", param) if param.nonEmpty && args.tail.forall(e => Helper.includeAddress(e)) =>
-          (WaitForCommand.AddBreakPoints, args.tail.map(e => Helper.parseInt(e)).toList, Nil, None, None)
+        case ("b", param)
+            if param.nonEmpty && args.tail.forall(e =>
+              Helper.includeAddress(e)) =>
+          (WaitForCommand.AddBreakPoints,
+           args.tail.map(e => Helper.parseInt(e)).toList,
+           Nil,
+           None,
+           None)
         case ("b", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("df", Array()) => (WaitForCommand.DumpToFile,    Nil, Nil, None, None)
+        case ("df", Array()) =>
+          (WaitForCommand.DumpToFile, Nil, Nil, None, None)
 
-        case ("di", param) if param.nonEmpty && param.length == 1 && Helper.includeAddress(param.head) =>
-          (WaitForCommand.Disassemble, Nil, Nil, Option(Helper.parseInt(args.tail.head)), None)
-        case ("di", Array()) => (WaitForCommand.Retry,         Nil, Nil, None, None)
+        case ("di", param)
+            if param.nonEmpty && param.length == 1 && Helper.includeAddress(
+              param.head) =>
+          (WaitForCommand.Disassemble,
+           Nil,
+           Nil,
+           Option(Helper.parseInt(args.tail.head)),
+           None)
+        case ("di", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("du", param) if param.nonEmpty && param.length == 1 && Helper.includeAddress(param.head) =>
-          (WaitForCommand.DumpToConsole, Nil, Nil, Option(Helper.parseInt(args.tail.head)), None)
-        case ("du", Array()) => (WaitForCommand.DumpToConsole, Nil, Nil, None, None)
+        case ("du", param)
+            if param.nonEmpty && param.length == 1 && Helper.includeAddress(
+              param.head) =>
+          (WaitForCommand.DumpToConsole,
+           Nil,
+           Nil,
+           Option(Helper.parseInt(args.tail.head)),
+           None)
+        case ("du", Array()) =>
+          (WaitForCommand.DumpToConsole, Nil, Nil, None, None)
 
-        case ("d" , param) if param.nonEmpty && param.forall(e => Helper.includeAddress(e)) =>
-            (WaitForCommand.DeleteBreakPoints, Nil, param.map(e => Helper.parseInt(e)).toList, None, None)
-        case ("d" , Array()) => (WaitForCommand.Retry,            Nil, Nil, None, None)
+        case ("d", param)
+            if param.nonEmpty && param.forall(e => Helper.includeAddress(e)) =>
+          (WaitForCommand.DeleteBreakPoints,
+           Nil,
+           param.map(e => Helper.parseInt(e)).toList,
+           None,
+           None)
+        case ("d", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("i" , Array()) => (WaitForCommand.PrintBreakPoints, Nil, Nil, None, None)
+        case ("i", Array()) =>
+          (WaitForCommand.PrintBreakPoints, Nil, Nil, None, None)
 
-        case ("j" , param) if param.nonEmpty && param.length == 1 && Helper.includeAddress(param.head) =>
-            (WaitForCommand.JumpToAddress, Nil, Nil, Option(Helper.parseInt(args.tail.head)), None)
-        case ("j" , Array()) => (WaitForCommand.Retry,            Nil, Nil, None, None)
+        case ("j", param)
+            if param.nonEmpty && param.length == 1 && Helper.includeAddress(
+              param.head) =>
+          (WaitForCommand.JumpToAddress,
+           Nil,
+           Nil,
+           Option(Helper.parseInt(args.tail.head)),
+           None)
+        case ("j", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("m" , param) if param.nonEmpty && param.length == 2 && param.forall(Helper.includeAddress(_)) =>
-            (WaitForCommand.WriteMemory, Nil, Nil,
-              Option(Helper.parseInt(param.head)),
-              Option(Helper.parseInt(param.tail.head)))
+        case ("m", param)
+            if param.nonEmpty && param.length == 2 && param.forall(
+              Helper.includeAddress(_)) =>
+          (WaitForCommand.WriteMemory,
+           Nil,
+           Nil,
+           Option(Helper.parseInt(param.head)),
+           Option(Helper.parseInt(param.tail.head)))
 
-        case ("m" , Array()) => (WaitForCommand.Retry,       Nil, Nil, None, None)
-        case ("p" , Array()) => (WaitForCommand.PrintStatus, Nil, Nil, None, None)
-        case ("r" , Array()) => (WaitForCommand.Run,         Nil, Nil, None, None)
-        case ("st", Array()) => (WaitForCommand.DumpStack,   Nil, Nil, None, None)
-        case ("h" , Array()) => (WaitForCommand.PrintHelp,   Nil, Nil, None, None)
-        case _         => (WaitForCommand.Retry,       Nil, Nil, None, None)
-    }
+        case ("m", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
+        case ("p", Array()) =>
+          (WaitForCommand.PrintStatus, Nil, Nil, None, None)
+        case ("r", Array())  => (WaitForCommand.Run, Nil, Nil, None, None)
+        case ("st", Array()) => (WaitForCommand.DumpStack, Nil, Nil, None, None)
+        case ("h", Array())  => (WaitForCommand.PrintHelp, Nil, Nil, None, None)
+        case _               => (WaitForCommand.Retry, Nil, Nil, None, None)
+      }
 
     WatchOptions(cmd, bp, bpi, add1, add2)
 
   }
 
-
   /**
-   *
-   * Watch args convert to Options For Watch Mode
-   *
-   * @param command
-   * @param breakPoints
-   * @param breakPointIndexes
-   * @param targetAddress1
-   * @param targetAddress2
-   */
+    *
+    * Watch args convert to Options For Watch Mode
+    *
+    * @param command
+    * @param breakPoints
+    * @param breakPointIndexes
+    * @param targetAddress1
+    * @param targetAddress2
+    */
   case class WatchOptions(command: WaitForCommand,
                           breakPoints: List[Int],
                           breakPointIndexes: List[Int],
                           targetAddress1: Option[Int],
-                          targetAddress2: Option[Int]) {
-
-  }
-
-
-
-
-
+                          targetAddress2: Option[Int]) {}
 
   /***********************************************************************
-   *
-   * Dump
-   *
+    *
+    * Dump
+    *
    ***********************************************************************/
-
   def dump(machine: Machine): List[String] = {
     this.dump(machine, 0x0000)
   }
 
-  def dump(machine: Machine, startAddress: Int): List[String] ={
+  def dump(machine: Machine, startAddress: Int): List[String] = {
     this.dumpMemory(machine, startAddress, DUMP_LINE_COUNT)
   }
 
@@ -398,8 +453,9 @@ object ScaComet2 {
     tmpList += f"SF:  ${machine.SF}"
     tmpList += f"ZF:  ${machine.ZF}"
 
-    machine.generalRegisters.zipWithIndex.foreach { case (r: Register, i: Int) =>
-      tmpList += f"GR$i%d: #${r.word}%04X"
+    machine.generalRegisters.zipWithIndex.foreach {
+      case (r: Register, i: Int) =>
+        tmpList += f"GR$i%d: #${r.word}%04X"
     }
 
     tmpList ++= this.dumpMemory(machine, 0, 0xFFFF / OCTET)
@@ -407,14 +463,16 @@ object ScaComet2 {
     tmpList.toList
   }
 
-  def dumpMemory(machine: Machine, startAddress: Int, lines: Int): List[String] = {
+  def dumpMemory(machine: Machine,
+                 startAddress: Int,
+                 lines: Int): List[String] = {
     val tmpList: ListBuffer[String] = new ListBuffer[String]
-    for(i <- 0 to lines){
+    for (i <- 0 to lines) {
       val pos = startAddress + i * OCTET
       val target = machine.memory.slice(pos, pos + OCTET)
 
-      val address    = f"#$pos%04X"
-      val hexValues  = target.map(x => f"#$x%04X").mkString(" ")
+      val address = f"#$pos%04X"
+      val hexValues = target.map(x => f"#$x%04X").mkString(" ")
       val charValues = target.map(Helper.intToCharForCaslII).mkString
 
       tmpList.append(f"$address : $hexValues%-39s $charValues%-8s".trim)

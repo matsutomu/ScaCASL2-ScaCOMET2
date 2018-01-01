@@ -12,7 +12,7 @@ object BinaryNumber {
   case object Zero extends BinaryNumber {
     override def toString: String = "0"
   }
-  case object One extends BinaryNumber{
+  case object One extends BinaryNumber {
     override def toString: String = "1"
   }
 }

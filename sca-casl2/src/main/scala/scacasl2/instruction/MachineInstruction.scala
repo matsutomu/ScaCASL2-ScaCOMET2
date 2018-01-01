@@ -106,5 +106,4 @@ object MachineInstruction {
                          RET,
                          SVC)
 
-
 }

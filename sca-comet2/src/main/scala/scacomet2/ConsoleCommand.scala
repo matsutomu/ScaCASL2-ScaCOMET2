@@ -9,7 +9,6 @@ object CliCommand {
   case object InputError extends CliCommand
 }
 
-
 sealed abstract class WaitForCommand
 object WaitForCommand {
   case object Quit extends WaitForCommand

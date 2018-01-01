@@ -3,12 +3,12 @@ package scacasl2
 import scacasl2.instruction.Instruction
 
 /**
- * Public parse result
- *
- * @param instructions
- * @param symbolTable
- * @param errors
- */
+  * Public parse result
+  *
+  * @param instructions
+  * @param symbolTable
+  * @param errors
+  */
 case class CaslParseResult(instructions: List[InstructionRichInfo],
                            symbolTable: Map[String, Int],
                            errors: List[ParseError]) {

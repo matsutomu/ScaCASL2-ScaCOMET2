@@ -19,8 +19,6 @@ class Machine {
     binaries.copyToArray(this.memory, 0, binaries.length)
   }
 
-
-
   //
   // Registers
   //
@@ -35,7 +33,7 @@ class Machine {
 
   private val INITIAL_STACK_POINTER_ADR = 0xFF00
   val gr8 = StackPointer(INITIAL_STACK_POINTER_ADR)
-  val SP  = gr8
+  val SP = gr8
 
   private def stackPointer = this.gr8.word
   private def stackPointer(v: Int): Unit = this.gr8.word = v
@@ -44,7 +42,6 @@ class Machine {
 
   val PR = ProgramRegister(0)
   private val fr = FlagRegister(0)
-
 
   //
   // Flag Registers
@@ -69,23 +66,25 @@ class Machine {
   private def overFlowFlgOff(): Unit = this.fr.word = 0x0006 & this.fr.word
 
   // 0001 | 0***
-  private def overFlowFlgOn(): Unit  = this.fr.word = 0x0001 | this.fr.word
+  private def overFlowFlgOn(): Unit = this.fr.word = 0x0001 | this.fr.word
 
   // 0101 & 0***
-  private def signFlgOff(): Unit     = this.fr.word = 0x0005 & this.fr.word
+  private def signFlgOff(): Unit = this.fr.word = 0x0005 & this.fr.word
 
   // 0010 | 0***
-  private def signFlgOn(): Unit      = this.fr.word = 0x0002 | this.fr.word
+  private def signFlgOn(): Unit = this.fr.word = 0x0002 | this.fr.word
 
   // 0011 & 0***
-  private def zeroFlgOff(): Unit     = this.fr.word = 0x0003 & this.fr.word
+  private def zeroFlgOff(): Unit = this.fr.word = 0x0003 & this.fr.word
 
   // 0100 | 0***
-  private def zeroFlgOn(): Unit      = this.fr.word = 0x0004 | this.fr.word
+  private def zeroFlgOn(): Unit = this.fr.word = 0x0004 | this.fr.word
 
-  private def flagLiteral(): String  = this.OF.toString + this.SF.toString + this.ZF.toString
+  private def flagLiteral(): String =
+    this.OF.toString + this.SF.toString + this.ZF.toString
 
-  private def getBit(x: Int, position: Byte): Int = if ((x & (1 << position)) == 0) 0 else 1
+  private def getBit(x: Int, position: Byte): Int =
+    if ((x & (1 << position)) == 0) 0 else 1
 
   private def changeFlags(result: Int,
                           typeofinstruct: InstructionsOfAorL): Unit = {
@@ -98,7 +97,8 @@ class Machine {
         if (result < 0 || 0xffff < result) 0x0001
         else 0x0000
       } else { // not change
-        if (this.getFlagInfo(this.POSITION_OVER_FLOW_FLAG) == BinaryNumber.Zero) 0x0000
+        if (this.getFlagInfo(this.POSITION_OVER_FLOW_FLAG) == BinaryNumber.Zero)
+          0x0000
         else 0x0001
       }
     }
@@ -187,7 +187,6 @@ class Machine {
     0xF0 -> Decode(OperandType.ArgAdrX, this.supervisorCall)
   )
 
-
   /**
     * Binary Code run 1 step
     *
@@ -266,11 +265,10 @@ class Machine {
 
   private def getValueEffectiveAddress(address: Int, x: Int): Int = {
     if (x == 0) this.memory(address)
-    else this.memory(Helper.bitToUnsignedShort(address + this.generalRegisters(x).word))
+    else
+      this.memory(
+        Helper.bitToUnsignedShort(address + this.generalRegisters(x).word))
   }
-
-
-
 
   ///
   /// BreakPoints
@@ -285,16 +283,18 @@ class Machine {
   }
 
   def breakPointInfo(): List[String] = {
-    this.breakPoints.sorted.zipWithIndex.map { case (address, i) =>
-      val index = i + 1
+    this.breakPoints.sorted.zipWithIndex.map {
+      case (address, i) =>
+        val index = i + 1
         f"$index%4d : #$address%04x"
     }.toList
   }
 
   def deleteBreakPoint(index: Int): Unit = {
     val i = index - 1
-    if(this.breakPoints.indices.contains(i)){
-      this.breakPoints = this.breakPoints.filterNot(_ == this.breakPoints(i)).sorted
+    if (this.breakPoints.indices.contains(i)) {
+      this.breakPoints =
+        this.breakPoints.filterNot(_ == this.breakPoints(i)).sorted
     } else {
       throw new ArrayIndexOutOfBoundsException
     }
@@ -303,7 +303,7 @@ class Machine {
   /**  Watch Register, Memory **/
   private var watchTargets: Set[String] = Set.empty[String]
   def addWatch(target: String): Unit = {
-    if(target.matches(Machine.WATCH_VARIABLE_REGS)){
+    if (target.matches(Machine.WATCH_VARIABLE_REGS)) {
       this.watchTargets += target
     } else {
       throw new IllegalArgumentException(target)
@@ -312,7 +312,8 @@ class Machine {
 
   def delWatch(target: String): Unit = this.watchTargets -= target
 
-  def watchInfo(decimal: Boolean = false): List[String] = watchTargets.map(this.watchInfoFlag(_, decimal)).toList
+  def watchInfo(decimal: Boolean = false): List[String] =
+    watchTargets.map(this.watchInfoFlag(_, decimal)).toList
 
   private def watchInfoFlag(target: String, decimal: Boolean): String = {
     val grs = "GR[0-8]".r
@@ -322,9 +323,9 @@ class Machine {
       case "ZF"  => (target, this.ZF.toString.toInt)
       case "PR"  => (target, this.PR.word)
       case grs() => (target, generalRegisters(target.takeRight(1).toInt).word)
-      case _  => {
+      case _ => {
         val address = Helper.parseInt(target)
-        if(address < 0 || 0xffff < address){
+        if (address < 0 || 0xffff < address) {
           throw new RuntimeException
         } else {
           (f"#$address%04X", this.memory(address))
@@ -332,26 +333,25 @@ class Machine {
       }
     }
 
-    if(target.matches("OF|SF|ZF") || decimal){
+    if (target.matches("OF|SF|ZF") || decimal) {
       f"$k=$v%d"
     } else {
       f"$k=#$v%04X"
     }
   }
 
-
   /**
-   *  Binary Data TO CASLII Code
-   *
-   * @param startAddress
-   * @param stepCount
-   * @return
-   */
+    *  Binary Data TO CASLII Code
+    *
+    * @param startAddress
+    * @param stepCount
+    * @return
+    */
   def disassemble(startAddress: Int, stepCount: Int): List[String] = {
     var address = startAddress
     var tempRet = new ListBuffer[String]
 
-    for(i <- 0 until stepCount){
+    for (i <- 0 until stepCount) {
       val word1 = this.memory(address)
       val word2 = this.memory(address + 1)
       val word3 = this.memory(address + 2)
@@ -360,28 +360,36 @@ class Machine {
       val opeValues: Operand = decodeOperand(word1, word2, opeCode)
 
       import scacasl2.instruction.InstructionFactory
-      val (wordSize: Int, literal: String) = InstructionFactory.INSTRUCTION_INF_MAP.find( p => p._2.byteCode == opeCode).map {
-        case (ope, info) => {
+      val (wordSize: Int, literal: String) =
+        InstructionFactory.INSTRUCTION_INF_MAP
+          .find(p => p._2.byteCode == opeCode)
+          .map {
+            case (ope, info) => {
 
-          val disassembleCode = ope match {
-            case "IN" | "OUT" => f"${ope.replaceAll("[12]","")}%-8s #$word2%04X, #$word3%04X"
-            case _            => f"${ope.replaceAll("[12]","")}%-8s ${opeValues.disassemble}"
-          }
+              val disassembleCode = ope match {
+                case "IN" | "OUT" =>
+                  f"${ope.replaceAll("[12]", "")}%-8s #$word2%04X, #$word3%04X"
+                case _ =>
+                  f"${ope.replaceAll("[12]", "")}%-8s ${opeValues.disassemble}"
+              }
 
-          (info.wordSize,
-            info.wordSize match {
-              case 1 => f"#$address%04X: #$word1%04X               $disassembleCode"
-              case 2 => f"#$address%04X: #$word1%04X #$word2%04X         $disassembleCode"
-              case 3 => f"#$address%04X: #$word1%04X #$word2%04X #$word3%04X   $disassembleCode"
-              case _ => throw new IllegalArgumentException(s"not supported word size${info.wordSize}")
+              (info.wordSize, info.wordSize match {
+                case 1 =>
+                  f"#$address%04X: #$word1%04X               $disassembleCode"
+                case 2 =>
+                  f"#$address%04X: #$word1%04X #$word2%04X         $disassembleCode"
+                case 3 =>
+                  f"#$address%04X: #$word1%04X #$word2%04X #$word3%04X   $disassembleCode"
+                case _ =>
+                  throw new IllegalArgumentException(
+                    s"not supported word size${info.wordSize}")
+              })
             }
-          )
-        }
-      }.getOrElse{
-        val c = Helper.intToCharForCaslII(word1)
-        (1,
-          f"#$address%04X: #$word1%04X                         $c")
-      }
+          }
+          .getOrElse {
+            val c = Helper.intToCharForCaslII(word1)
+            (1, f"#$address%04X: #$word1%04X                         $c")
+          }
 
       tempRet += literal.trim
       address = address + wordSize
@@ -390,32 +398,36 @@ class Machine {
     tempRet.toList
   }
 
-
   /**
-   * For Print Registers
-   *
-   */
+    * For Print Registers
+    *
+    */
   def statusInfo(): List[String] = {
 
     val disassemble = this.disassemble(this.PR.word, 1).mkString
-    List(f"PR #${this.PR.word}%04X [ $disassemble%-30s ]  STEP ${this.stepCount}%d",
-         f"SP #${this.SP.word}%04X(${this.SP.word}%7d) FR(OF, SF, ZF) ${this.flagLiteral}%3s  (${this.fr.word}%7d)") :::
-    (this.generalRegisters.filter(p => !p.isInstanceOf[StackPointer]).zipWithIndex.map { case (e, i) =>
-      val signed = Helper.bitToSignedShort(e.word)
-      f"GR$i #${e.word}%04X($signed%7d)"
-    }.splitAt(4) match {
+    List(
+      f"PR #${this.PR.word}%04X [ $disassemble%-30s ]  STEP ${this.stepCount}%d",
+      f"SP #${this.SP.word}%04X(${this.SP.word}%7d) FR(OF, SF, ZF) ${this.flagLiteral}%3s  (${this.fr.word}%7d)"
+    ) :::
+      (this.generalRegisters
+      .filter(p => !p.isInstanceOf[StackPointer])
+      .zipWithIndex
+      .map {
+        case (e, i) =>
+          val signed = Helper.bitToSignedShort(e.word)
+          f"GR$i #${e.word}%04X($signed%7d)"
+      }
+      .splitAt(4) match {
       case (a, b) => List(a.mkString(" "), b.mkString(" "))
       case _      => Nil
     })
   }
-
 
   /*****************************************************************************
     *
     * Instruction Code
     *
    *****************************************************************************/
-  
   def Nop = (arg: Operand) => {
     this.PR ++ 1
   }
@@ -425,7 +437,8 @@ class Machine {
 
     this.generalRegisters(arg.r).word =
       this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.OtherInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.OtherInstruct)
     this.overFlowFlgOff() // *1
     this.PR ++ 2
     ()
@@ -448,7 +461,8 @@ class Machine {
   def load1 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     this.generalRegisters(arg.r1).word = this.generalRegisters(arg.r2).word
-    this.changeFlags(this.generalRegisters(arg.r1).word, InstructionsOfAorL.OtherInstruct)
+    this.changeFlags(this.generalRegisters(arg.r1).word,
+                     InstructionsOfAorL.OtherInstruct)
     this.overFlowFlgOff() // *1
     this.PR ++ 1
   }
@@ -457,7 +471,9 @@ class Machine {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
-    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r).word) + Helper.bitToSignedShort(eAdr)
+    val result = Helper
+      .bitToSignedShort(this.generalRegisters(arg.r).word) + Helper
+      .bitToSignedShort(eAdr)
     this.generalRegisters(arg.r).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 2
@@ -479,7 +495,9 @@ class Machine {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
-    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r).word) - Helper.bitToSignedShort(eAdr)
+    val result = Helper
+      .bitToSignedShort(this.generalRegisters(arg.r).word) - Helper
+      .bitToSignedShort(eAdr)
     this.generalRegisters(arg.r).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 2
@@ -503,7 +521,8 @@ class Machine {
     this
       .generalRegisters(arg.r)
       .word = this.generalRegisters(arg.r).word & eAdr
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.LogicalInstruct)
     this.overFlowFlgOff()
     this.PR ++ 2
 
@@ -516,7 +535,8 @@ class Machine {
     this
       .generalRegisters(arg.r)
       .word = this.generalRegisters(arg.r).word | eAdr
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.LogicalInstruct)
     this.overFlowFlgOff()
     this.PR ++ 2
 
@@ -529,7 +549,8 @@ class Machine {
     this
       .generalRegisters(arg.r)
       .word = this.generalRegisters(arg.r).word ^ eAdr
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.LogicalInstruct)
     this.overFlowFlgOff()
     this.PR ++ 2
 
@@ -538,7 +559,9 @@ class Machine {
   private def compareArithmetic2 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
-    val diff = Helper.bitToSignedShort(this.generalRegisters(arg.r).word) - Helper.bitToSignedShort(eAdr)
+    val diff = Helper
+      .bitToSignedShort(this.generalRegisters(arg.r).word) - Helper
+      .bitToSignedShort(eAdr)
     this.changeFlagByCompare(diff)
     this.PR ++ 2
   }
@@ -554,8 +577,9 @@ class Machine {
 
   def addArithmetic1 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
-    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r1).word) + Helper.bitToSignedShort(
-      this.generalRegisters(arg.r2).word)
+    val result = Helper
+      .bitToSignedShort(this.generalRegisters(arg.r1).word) + Helper
+      .bitToSignedShort(this.generalRegisters(arg.r2).word)
     this.generalRegisters(arg.r1).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 1
@@ -575,8 +599,9 @@ class Machine {
 
   def subArithmetic1 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
-    val result = Helper.bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper.bitToSignedShort(
-      this.generalRegisters(arg.r2).word)
+    val result = Helper
+      .bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper
+      .bitToSignedShort(this.generalRegisters(arg.r2).word)
     this.generalRegisters(arg.r1).word = Helper.bitToUnsignedShort(result)
     this.changeFlags(result, InstructionsOfAorL.ArithmeticInstruct)
     this.PR ++ 1
@@ -600,7 +625,8 @@ class Machine {
     this.generalRegisters(arg.r1).word = this
       .generalRegisters(arg.r1)
       .word & this.generalRegisters(arg.r2).word
-    this.changeFlags(this.generalRegisters(arg.r1).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r1).word,
+                     InstructionsOfAorL.LogicalInstruct)
     this.overFlowFlgOff()
     this.PR ++ 1
 
@@ -612,7 +638,8 @@ class Machine {
     this.generalRegisters(arg.r1).word = this
       .generalRegisters(arg.r1)
       .word | this.generalRegisters(arg.r2).word
-    this.changeFlags(this.generalRegisters(arg.r1).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r1).word,
+                     InstructionsOfAorL.LogicalInstruct)
     this.overFlowFlgOff()
     this.PR ++ 1
 
@@ -624,7 +651,8 @@ class Machine {
     this.generalRegisters(arg.r1).word = this
       .generalRegisters(arg.r1)
       .word ^ this.generalRegisters(arg.r2).word
-    this.changeFlags(this.generalRegisters(arg.r1).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r1).word,
+                     InstructionsOfAorL.LogicalInstruct)
     this.overFlowFlgOff()
     this.PR ++ 1
 
@@ -632,8 +660,9 @@ class Machine {
 
   private def compareArithmetic1 = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
-    val diff = Helper.bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper.bitToSignedShort(
-      this.generalRegisters(arg.r2).word)
+    val diff = Helper
+      .bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper
+      .bitToSignedShort(this.generalRegisters(arg.r2).word)
     this.changeFlagByCompare(diff)
     this.PR ++ 1
   }
@@ -659,7 +688,8 @@ class Machine {
     } else {
       ((p << v) & 0x7FFF) | 0x8000
     }
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.ArithmeticInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.ArithmeticInstruct)
 
     if (0 < v) {
       if (this.getBit(p, (15 - v).toByte) == 0) {
@@ -685,7 +715,8 @@ class Machine {
     } else {
       ((p >> v) & 0x7FFF) | 0x8000
     }
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.ArithmeticInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.ArithmeticInstruct)
 
     if (0 < v) {
       if (this.getBit(p, (v - 1).toByte) == 0) {
@@ -706,7 +737,8 @@ class Machine {
 
     val p = this.generalRegisters(arg.r).word
     this.generalRegisters(arg.r).word = (p << v) & 0xFFFF
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.LogicalInstruct)
 
     if (0 < v) {
       if (this.getBit(p, (15 - (v - 1)).toByte) == 0) {
@@ -726,7 +758,8 @@ class Machine {
 
     val p = this.generalRegisters(arg.r).word
     this.generalRegisters(arg.r).word = (p >> v) & 0xFFFF
-    this.changeFlags(this.generalRegisters(arg.r).word, InstructionsOfAorL.LogicalInstruct)
+    this.changeFlags(this.generalRegisters(arg.r).word,
+                     InstructionsOfAorL.LogicalInstruct)
 
     if (0 < v) {
       if (this.getBit(p, (v - 1).toByte) == 0) {
@@ -749,7 +782,9 @@ class Machine {
 
   private def jumpOnPlus = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
-    jumpByCondition(arg, this.SF == BinaryNumber.Zero && this.ZF == BinaryNumber.Zero)
+    jumpByCondition(
+      arg,
+      this.SF == BinaryNumber.Zero && this.ZF == BinaryNumber.Zero)
   }
 
   private def jumpOnMinus = (ope: Operand) => {
@@ -817,7 +852,6 @@ class Machine {
     }
   }
 
-
   def in = (ope: Operand) => {
 
     var inputString = scala.io.StdIn.readLine()
@@ -849,7 +883,8 @@ class Machine {
       if (Character.isValidCodePoint(this.memory(startAdr + i))) {
         outputString += this.memory(startAdr + i).toChar.toString
       } else {
-        throw new IllegalArgumentException(s"no good 'out' parameter(position:$i)")
+        throw new IllegalArgumentException(
+          s"no good 'out' parameter(position:$i)")
       }
     }
     println(outputString)
