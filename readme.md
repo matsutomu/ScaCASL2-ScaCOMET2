@@ -2,14 +2,14 @@
 # CASL2 / COMET2  by Scala  [![Build Status](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2.svg?branch=master)](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2)
 
 ## 目次
-- [概要](##概要)
-- [動作環境](##動作環境)
-- [ビルド及び実行](##ビルド及び実行)
-- [ScaCasl2](##ScaCasl2)
-- [ScaComet2](##ScaComet2)
-- [Other](##Other)
-- [謝意](##謝意)
-- [License](##License)
+- [概要](#概要)
+- [動作環境](#動作環境)
+- [ビルド及び実行](#ビルド及び実行)
+- [ScaCasl2](#ScaCasl2)
+- [ScaComet2](#ScaComet2)
+- [Other](#Other)
+- [謝意](#謝意)
+- [License](#License)
 
 
 ## 概要
