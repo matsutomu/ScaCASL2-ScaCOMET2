@@ -5,11 +5,10 @@
 - [概要](#概要)
 - [動作環境](#動作環境)
 - [ビルド及び実行](#ビルド及び実行)
-- [ScaCasl2](#ScaCasl2)
-- [ScaComet2](#ScaComet2)
-- [Other](#Other)
+- [利用方法](#利用方法)
+- [その他](#その他)
 - [謝意](#謝意)
-- [License](#License)
+- [ライセンス](#ライセンス)
 
 
 ## 概要
@@ -46,8 +45,8 @@ done.
 HELLO CASL2 & COMET2
 ```
 
-## ScaCasl2
-### 利用方法
+## 利用方法
+### ScaCasl2
 
 CASLII のファイルをアセンブルする方法です。
 ```
@@ -66,7 +65,7 @@ $java -jar sca-casl2-assembly-0.1.jar sample01.cas sample-exe.com
 [success]output to sample/sample-exe.com
 ```
 
-options  
+#### options  
 
 | パラメータ | 内容 |  
  -- | --   
@@ -75,8 +74,7 @@ options
 | -a | アセンブルをしつつ dump & コード & シンボル表をコンソールに表示 |
 
 
-## ScaComet2
-### 利用方法
+### ScaComet2
 COMETII を実行する方法です。
 ```
 $java -jar sca-comet2-assembly-0.1.jar [options1] [options2] <execute file path>
@@ -90,7 +88,7 @@ done.
 HELLO CASL2 & COMET2
 ```
 
-options1
+#### options1
 
 | パラメータ | 内容 |  
  -- | --   
@@ -98,7 +96,7 @@ options1
 | -h | ヘルプ表示 |  
 | -d | デバッグモードで実行 |  
 
-options2
+#### options2
 
 | パラメータ | 内容 |  
  -- | -- 
@@ -106,7 +104,7 @@ options2
 | -du | 最終状態をlast_state.txtに保存 |  
 | -w | 引数に指定されたレジスターの情報を表示 |  
 
-### デバッグモード
+#### デバッグモード
 options1に"-d"を指定して実行した場合に、デバックモードで実行可能です。
 
 ```
@@ -148,7 +146,7 @@ ScaComet2>
 | h  | - | ヘルプを表示 |  
 
 
-## Other
+## その他
 ### Unit Test
 $sbt test
 
@@ -168,5 +166,5 @@ $sbt coverageReport
 - [dwango scala text](http://dwango.github.io/scala_text/)
 
 
-## License
+## ライセンス
 CASL2 / COMET2 by Scala はGPL2に基づくフリーソフトウェアとして公開しています。
