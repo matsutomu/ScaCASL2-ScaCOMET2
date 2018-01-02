@@ -483,7 +483,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
            |m ADDR VAL    Change the memory at ADDR to VAL.
            |p             Print register status.
            |q             Quit.
-           |r             Strat execution of program.
+           |r             Start execution of program.
            |s             Step execution.
            |st            Dump 128 words of stack image.
            |ScaComet2>   1 : #0002

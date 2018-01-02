@@ -1,12 +1,16 @@
 
 # CASL2 / COMET2  by Scala  [![Build Status](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2.svg?branch=master)](https://travis-ci.org/matsutomu/ScaCASL2-ScaCOMET2)
 
-CASL2 / COMET2 を Scalaで実装しました。以下を大変参考にさせて頂きました。
+## 目次
+- [概要](##概要)
+- [動作環境](##動作環境)
+- [ビルド及び実行](##ビルド及び実行)
+- [ScaCasl2](##ScaCasl2)
+- [ScaComet2](##ScaComet2)
+- [Other](##Other)
+- [謝意](##謝意)
+- [License](##License)
 
-- [PyCASL2 & PyCOMET2 Java](https://github.com/oguna/pycasl2-pycomet2-java)
-- [CASLIIアセンブラ & シミュレータ PyCASL2 & PyCOMET2](http://www.image.med.osaka-u.ac.jp/member/nakamoto/pycasl2/index.html)
-- [YACASL2](http://www.j8takagi.net/yacasl2/)
-- [進数変換](https://hogehoge.tk/tool/number.html)
 
 ## 概要
 
@@ -21,7 +25,14 @@ COMETIIの構成は、基本的に16bitをひとかたまりとして考えた�
 - Java版と同様にGR8がSPを兼ねる
 と言った特徴があります。
 
-## ビルド & 実行
+## 動作環境
+
+ビルド、実行及び開発には以下が必要です。
+- [Java](http://www.oracle.com/technetwork/jp/java/javase/overview/8-whats-new-2157071-ja.html) 1.8+
+- [Scala](https://www.scala-lang.org/) 2.12.3+ (開発するなら)
+
+## ビルド及び実行
+
 sample ディレクトリにbuild用のシェルとCASLIIサンプルを置いています。
 
 ```shell
@@ -96,7 +107,46 @@ options2
 | -w | 引数に指定されたレジスターの情報を表示 |  
 
 ### デバッグモード
-更新予定
+options1に"-d"を指定して実行した場合に、デバックモードで実行可能です。
+
+```
+$java -jar sca-comet2-assembly-0.1.jar -d sample02.com
+load /Users/matsutomu/work/github/ScaCASL2-ScaCOMET2/sample/sample02.com ...
+done.
+ScaComet2>
+```
+
+上記状態で、"s"を入力してEnterを押すと1stepだけ実行されます。
+その状態で"p"を入力すると、レジスターの情報が表示されます。
+
+```
+ScaComet2>s
+ScaComet2>p
+PR #0003 [ #0003: #1000 #001C         LD       GR0, #001C ]  STEP 1
+SP #FF00(  65280) FR(OF, SF, ZF) 000  (      0)
+GR0 #0000(      0) GR1 #0000(      0) GR2 #0000(      0) GR3 #0000(      0)
+GR4 #0000(      0) GR5 #0000(      0) GR6 #0000(      0) GR7 #0000(      0)
+ScaComet2>
+```
+
+"r"を入力すると最後まで実行します。
+
+| コマンド | パラメータ | 内容 |  
+ --  | -- | -- 
+| q  | - | プログラムを終了 |  
+| r  | - | プログラムを続けて実行 |  
+| s  | - | 1ステップ実行 |  
+| p  | -  | レジスターの情報を表示 |  
+| b  | Address | 指定したアドレスにブレークポイントを設定 |  
+| i  | - | ブレークポイントの一覧を表示 |   
+| d  | Index   | 指定したインデックスのブレークポイントを削除 |  
+| di | Address | 指定したアドレスからディスアセンブリしてコードを表示 |   
+| du | Address | 指定したアドレスからメモリーの情報を16進数で表示 |  
+| st | - | スタックの情報を表示（128語） |  
+| j  | Address | 指定したアドレスをプログラムレジスターに設定（次の実行アドレスを指定） |   
+| m  | Address  Value | メモリーの指定したアドレスに値を設定 |  
+| h  | - | ヘルプを表示 |  
+
 
 ## Other
 ### Unit Test
@@ -106,5 +156,17 @@ $sbt test
 $sbt clean coverage test  
 $sbt coverageReport
 
-# License
+## 謝意
+はるか昔の学生の頃は、アセンブラ（CASLII / COMETII）なんて全然理解できませんでした。
+が、その後色々経験し、Github上で色々なソースを見る事ができ、Scalaを学習する事で実装する事ができました。
+特に、以下のソースコード及びサイトを大変参考にさせてもらいました。
+
+- [PyCASL2 & PyCOMET2 Java](https://github.com/oguna/pycasl2-pycomet2-java)
+- [CASLIIアセンブラ & シミュレータ PyCASL2 & PyCOMET2](http://www.image.med.osaka-u.ac.jp/member/nakamoto/pycasl2/index.html)
+- [YACASL2](http://www.j8takagi.net/yacasl2/)
+- [進数変換](https://hogehoge.tk/tool/number.html)
+- [dwango scala text](http://dwango.github.io/scala_text/)
+
+
+## License
 CASL2 / COMET2 by Scala はGPL2に基づくフリーソフトウェアとして公開しています。
