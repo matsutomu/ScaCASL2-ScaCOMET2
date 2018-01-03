@@ -1,6 +1,5 @@
 package scacasl2
 
-import java.security.InvalidParameterException
 import better.files.File
 
 /**

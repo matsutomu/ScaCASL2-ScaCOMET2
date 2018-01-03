@@ -190,7 +190,7 @@ object InstructionFactory {
       if (operands.size == 1
           && operands.head.matches(REGEX_DS_NUM)
           && operands.head.toInt >= DS_MIN_NUM
-          && operands.head.toInt <= DS_MAX_NUM) { // #todo what max value?
+          && operands.head.toInt <= DS_MAX_NUM) {
         val ope = OperandDs(operands.head.toInt)
         Right(AssemblyInstruction(code, ope, info, scope))
       } else Left(ERR_NO_GOOD_OPERAND + s"($code, ${operands.mkString(",")})")
@@ -377,8 +377,8 @@ object InstructionFactory {
       } else {
         IncorrectDescription(adr)
       }
-    } catch { //todo it' slow
-      case e: NumberFormatException =>
+    } catch {
+      case _: NumberFormatException =>
         IncorrectDescription(adr)
     }
 
@@ -410,8 +410,8 @@ object InstructionFactory {
       } else {
         IncorrectDescription(const)
       }
-    } catch { //todo it' slow
-      case e: NumberFormatException =>
+    } catch {
+      case _: NumberFormatException =>
         IncorrectDescription(const)
     }
   }

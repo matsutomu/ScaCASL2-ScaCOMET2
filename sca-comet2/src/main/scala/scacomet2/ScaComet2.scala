@@ -274,7 +274,10 @@ object ScaComet2 {
 
     while (this.running) {
       print("ScaComet2>")
-      val input = scala.io.StdIn.readLine().split("""\s""")
+      val inputLine = scala.io.StdIn.readLine()
+
+      val input =
+        if (inputLine == null) List("h") else inputLine.split("""\s""").toList
       val optForWait = parseArgsWaitCommand(input)
       optForWait.command match {
         case WaitForCommand.Quit => this.running = false
@@ -323,93 +326,100 @@ object ScaComet2 {
     * @param args
     * @return
     */
-  def parseArgsWaitCommand(args: Array[String]) = {
+  def parseArgsWaitCommand(args: List[String]) = {
 
-    val (cmd: WaitForCommand,
-         bp: List[Int],
-         bpi: List[Int],
-         add1: Option[Int],
-         add2: Option[Int]) =
-      //#todo no good - Nil, Array.empty, null . but "Array()" is Ok.
-      (args.head, args.tail) match {
-        case ("s", Array()) => (WaitForCommand.Step, Nil, Nil, None, None)
-        case ("q", Array()) => (WaitForCommand.Quit, Nil, Nil, None, None)
+    try {
 
-        case ("b", param)
-            if param.nonEmpty && args.tail.forall(e =>
-              Helper.includeAddress(e)) =>
-          (WaitForCommand.AddBreakPoints,
-           args.tail.map(e => Helper.parseInt(e)).toList,
-           Nil,
-           None,
-           None)
-        case ("b", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
+      val (cmd: WaitForCommand,
+           bp: List[Int],
+           bpi: List[Int],
+           add1: Option[Int],
+           add2: Option[Int]) =
+        args match {
+          case "s" :: Nil => (WaitForCommand.Step, Nil, Nil, None, None)
+          case "q" :: Nil => (WaitForCommand.Quit, Nil, Nil, None, None)
 
-        case ("df", Array()) =>
-          (WaitForCommand.DumpToFile, Nil, Nil, None, None)
+          case "b" :: param
+              if param.nonEmpty && args.tail.forall(e =>
+                Helper.includeAddress(e)) =>
+            (WaitForCommand.AddBreakPoints,
+             args.tail.map(e => Helper.parseInt(e)).toList,
+             Nil,
+             None,
+             None)
+          case "b" :: Nil => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("di", param)
-            if param.nonEmpty && param.length == 1 && Helper.includeAddress(
-              param.head) =>
-          (WaitForCommand.Disassemble,
-           Nil,
-           Nil,
-           Option(Helper.parseInt(args.tail.head)),
-           None)
-        case ("di", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
+          case "df" :: Nil =>
+            (WaitForCommand.DumpToFile, Nil, Nil, None, None)
 
-        case ("du", param)
-            if param.nonEmpty && param.length == 1 && Helper.includeAddress(
-              param.head) =>
-          (WaitForCommand.DumpToConsole,
-           Nil,
-           Nil,
-           Option(Helper.parseInt(args.tail.head)),
-           None)
-        case ("du", Array()) =>
-          (WaitForCommand.DumpToConsole, Nil, Nil, None, None)
+          case "di" :: param
+              if param.nonEmpty && param.length == 1 && Helper.includeAddress(
+                param.head) =>
+            (WaitForCommand.Disassemble,
+             Nil,
+             Nil,
+             Option(Helper.parseInt(args.tail.head)),
+             None)
+          case "di" :: Nil => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("d", param)
-            if param.nonEmpty && param.forall(e => Helper.includeAddress(e)) =>
-          (WaitForCommand.DeleteBreakPoints,
-           Nil,
-           param.map(e => Helper.parseInt(e)).toList,
-           None,
-           None)
-        case ("d", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
+          case "du" :: param
+              if param.nonEmpty && param.length == 1 && Helper.includeAddress(
+                param.head) =>
+            (WaitForCommand.DumpToConsole,
+             Nil,
+             Nil,
+             Option(Helper.parseInt(args.tail.head)),
+             None)
+          case "du" :: Nil =>
+            (WaitForCommand.DumpToConsole, Nil, Nil, None, None)
 
-        case ("i", Array()) =>
-          (WaitForCommand.PrintBreakPoints, Nil, Nil, None, None)
+          case "d" :: param
+              if param.nonEmpty && param.forall(
+                e => Helper.includeAddress(e)) =>
+            (WaitForCommand.DeleteBreakPoints,
+             Nil,
+             param.map(e => Helper.parseInt(e)).toList,
+             None,
+             None)
+          case "d" :: Nil => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("j", param)
-            if param.nonEmpty && param.length == 1 && Helper.includeAddress(
-              param.head) =>
-          (WaitForCommand.JumpToAddress,
-           Nil,
-           Nil,
-           Option(Helper.parseInt(args.tail.head)),
-           None)
-        case ("j", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
+          case "i" :: Nil =>
+            (WaitForCommand.PrintBreakPoints, Nil, Nil, None, None)
 
-        case ("m", param)
-            if param.nonEmpty && param.length == 2 && param.forall(
-              Helper.includeAddress(_)) =>
-          (WaitForCommand.WriteMemory,
-           Nil,
-           Nil,
-           Option(Helper.parseInt(param.head)),
-           Option(Helper.parseInt(param.tail.head)))
+          case "j" :: param
+              if param.nonEmpty && param.length == 1 && Helper.includeAddress(
+                param.head) =>
+            (WaitForCommand.JumpToAddress,
+             Nil,
+             Nil,
+             Option(Helper.parseInt(args.tail.head)),
+             None)
+          case "j" :: Nil => (WaitForCommand.Retry, Nil, Nil, None, None)
 
-        case ("m", Array()) => (WaitForCommand.Retry, Nil, Nil, None, None)
-        case ("p", Array()) =>
-          (WaitForCommand.PrintStatus, Nil, Nil, None, None)
-        case ("r", Array())  => (WaitForCommand.Run, Nil, Nil, None, None)
-        case ("st", Array()) => (WaitForCommand.DumpStack, Nil, Nil, None, None)
-        case ("h", Array())  => (WaitForCommand.PrintHelp, Nil, Nil, None, None)
-        case _               => (WaitForCommand.Retry, Nil, Nil, None, None)
-      }
+          case "m" :: param
+              if param.nonEmpty && param.length == 2 && param.forall(
+                Helper.includeAddress(_)) =>
+            (WaitForCommand.WriteMemory,
+             Nil,
+             Nil,
+             Option(Helper.parseInt(param.head)),
+             Option(Helper.parseInt(param.tail.head)))
 
-    WatchOptions(cmd, bp, bpi, add1, add2)
+          case "m" :: Nil => (WaitForCommand.Retry, Nil, Nil, None, None)
+          case "p" :: Nil =>
+            (WaitForCommand.PrintStatus, Nil, Nil, None, None)
+          case "r" :: Nil  => (WaitForCommand.Run, Nil, Nil, None, None)
+          case "st" :: Nil => (WaitForCommand.DumpStack, Nil, Nil, None, None)
+          case "h" :: Nil  => (WaitForCommand.PrintHelp, Nil, Nil, None, None)
+          case _           => (WaitForCommand.Retry, Nil, Nil, None, None)
+        }
+
+      WatchOptions(cmd, bp, bpi, add1, add2)
+    } catch {
+      case _: NumberFormatException => // address to Int
+        WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None)
+
+    }
 
   }
 

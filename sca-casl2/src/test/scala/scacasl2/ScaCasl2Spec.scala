@@ -19,18 +19,15 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
 
     val currentDirectory = new java.io.File(".").getCanonicalPath
 
-    // #todo read & bynary compare
     assert(this.runCasl2Out(List(s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas").toArray) ===
       s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/count1.com
         |""".stripMargin)
 
-    // #todo read & bynary compare
     assert(this.runCasl2Out(List(s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas",
       s"${currentDirectory}/sca-casl2/src/test/resources/test.com").toArray) ===
       s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/test.com
          |""".stripMargin)
 
-    // #todo read & bynary compare
     assert(this.runCasl2Out(List("-a", s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas",
       s"${currentDirectory}/sca-casl2/src/test/resources/test.com").toArray) ===
       s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/test.com
@@ -99,7 +96,6 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
     val test = this.runCasl2Out(List("-a",
       s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas").toArray)
 
-    // #todo stripMargin last space!
     assert(test ===
       s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/count1.com
          |Addr	Op		Line	Source code

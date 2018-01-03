@@ -1,7 +1,7 @@
 package scacasl2
 
 import scacasl2.instruction._
-import scacasl2.operand.{OperandDc, OperandDs}
+import scacasl2.operand.OperandDc
 
 private[scacasl2] case class InnerParseResult(
     lineNumber: Int,

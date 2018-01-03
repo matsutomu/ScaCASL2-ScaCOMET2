@@ -519,7 +519,6 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
       "         END"
     )
 
-    // #todo error is ALL ParseError
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
@@ -553,7 +552,6 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
       "         END"
     )
 
-    // #todo error is ALL ParseError
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
@@ -582,7 +580,6 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
       "         END"
     )
 
-    // #todo error is ALL ParseError
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(
@@ -610,7 +607,6 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
       "         END"
     )
 
-    // #todo error is ALL ParseError
     val result = ProgramLineParser.parseFirst(programLines)
 
     val answer = List(

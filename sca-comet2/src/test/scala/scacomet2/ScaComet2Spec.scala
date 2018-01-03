@@ -165,109 +165,109 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
   }
 
   "ScaComet2 watch mode parameter parser " should " parse argument for watch mode " in {
-    assert(ScaComet2.parseArgsWaitCommand(Array("s")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("s")) ===
       ScaComet2.WatchOptions(WaitForCommand.Step, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("q")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("q")) ===
       ScaComet2.WatchOptions(WaitForCommand.Quit, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("b", "0", "#1", "#ffff", "#FFFF")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("b", "0", "#1", "#ffff", "#FFFF")) ===
       ScaComet2.WatchOptions(WaitForCommand.AddBreakPoints, List(0, 1, 0xffff, 0xffff), Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("df")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("df")) ===
       ScaComet2.WatchOptions(WaitForCommand.DumpToFile, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("di", "0")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("di", "0")) ===
       ScaComet2.WatchOptions(WaitForCommand.Disassemble, Nil, Nil, Some(0), None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("di", "#ffff")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("di", "#ffff")) ===
       ScaComet2.WatchOptions(WaitForCommand.Disassemble, Nil, Nil, Some(0xffff), None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("du")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("du")) ===
       ScaComet2.WatchOptions(WaitForCommand.DumpToConsole, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("d", "0", "#1", "#ffff", "#FFFF")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("d", "0", "#1", "#ffff", "#FFFF")) ===
       ScaComet2.WatchOptions(WaitForCommand.DeleteBreakPoints, Nil, List(0, 1, 0xffff, 0xffff), None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("i")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("i")) ===
       ScaComet2.WatchOptions(WaitForCommand.PrintBreakPoints, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("j", "0")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("j", "0")) ===
       ScaComet2.WatchOptions(WaitForCommand.JumpToAddress, Nil, Nil, Some(0), None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("j", "#ffff")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("j", "#ffff")) ===
       ScaComet2.WatchOptions(WaitForCommand.JumpToAddress, Nil, Nil, Some(0xffff), None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("m", "0", "0")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("m", "0", "0")) ===
       ScaComet2.WatchOptions(WaitForCommand.WriteMemory, Nil, Nil, Some(0), Some(0)))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("m", "#ffff", "#ffff")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("m", "#ffff", "#ffff")) ===
       ScaComet2.WatchOptions(WaitForCommand.WriteMemory, Nil, Nil, Some(0xffff), Some(0xffff)))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("p")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("p")) ===
       ScaComet2.WatchOptions(WaitForCommand.PrintStatus, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("r")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("r")) ===
       ScaComet2.WatchOptions(WaitForCommand.Run, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("st")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("st")) ===
       ScaComet2.WatchOptions(WaitForCommand.DumpStack, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("h")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("h")) ===
       ScaComet2.WatchOptions(WaitForCommand.PrintHelp, Nil, Nil, None, None))
 
   }
 
   it should " parse argument for watch mode (invalid parameter -> 'Retry') " in {
-    assert(ScaComet2.parseArgsWaitCommand(Array("")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("A")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("A")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("s", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("s", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("q", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("q", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("b")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("b")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("df", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("df", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("di")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("di")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("du", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("du", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("d")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("d")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("i", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("i", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("j", "ffff")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("j", "ffff")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("m", "#ffff")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("m", "#ffff")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("m")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("m")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("p", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("p", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("r", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("r", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("st", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("st", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
-    assert(ScaComet2.parseArgsWaitCommand(Array("h", "p1")) ===
+    assert(ScaComet2.parseArgsWaitCommand(List("h", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
   }
@@ -534,23 +534,13 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
     val currentDirectory = new java.io.File(".").getCanonicalPath
     val consoleOut = this.runCometWithInAndOut(Array("-d", "./sca-comet2/src/test/resources/count1.com"),
-      """b #2
-        |d 1
-        |b 2
-        |b 6
-        |di 1
-        |du 1
-        |h
-        |i
-        |j 0
-        |m #13 #0041
-        |p
-        |s
-        |st
-        |du 0
-        |r
-        |q""".stripMargin)
+      """b #9999999999999
+        |
+        |q
+      """.stripMargin)
 
+    //println(consoleOut)
+    // d 1 ArrayIndexOutOfBoundsException
     //#todo error input data
   }
 

@@ -290,6 +290,7 @@ class Machine {
     }.toList
   }
 
+  // #todo return exception?
   def deleteBreakPoint(index: Int): Unit = {
     val i = index - 1
     if (this.breakPoints.indices.contains(i)) {
