@@ -15,8 +15,7 @@ object ScaCasl2 {
 
   /**
     * entry point
-    *
-    * @param args
+    * 
     */
   def main(args: Array[String]): Unit = {
     try {
@@ -24,17 +23,15 @@ object ScaCasl2 {
       this.parseFile(options)
 
     } catch {
-      case e: Exception => {
+      case e: Exception => 
         e.printStackTrace()
         println(USAGE)
-      }
     }
   }
 
   /**
     * args convert to Options
     *
-    * @param argList
     */
   case class Options(command: CaslCliCommand, argList: List[String]) {
 
@@ -55,7 +52,6 @@ object ScaCasl2 {
   /**
     * parse args
     *
-    * @param args
     * @return
     */
   def parseArgs(args: Array[String]): Options = {
@@ -85,20 +81,18 @@ object ScaCasl2 {
     *
     * #todo no good : return message & write result to file
     *
-    * @param options
     * @return
     */
   def parseFile(options: Options): Unit = options.command match {
     case CaslCliCommand.Version =>
       println("CASLII Assembler version 0.1 (Scala) ")
 
-    case CaslCliCommand.Help | CaslCliCommand.InputError => {
+    case CaslCliCommand.Help | CaslCliCommand.InputError => 
       println(USAGE)
       println("  -a           turn on verbose listings")
       println("  -v --version display version and exit")
-    }
 
-    case CaslCliCommand.Run | CaslCliCommand.Dump => {
+    case CaslCliCommand.Run | CaslCliCommand.Dump => 
       val f1 = File(options.casFileName)
       if (f1.exists) {
         val result = ProgramLineParser.parseFirst(f1.lines.toList)
@@ -106,20 +100,18 @@ object ScaCasl2 {
           val binaryData = ProgramLineParser
             .convertBinaryCode(result.instructionModels, result.symbolTable)
 
-          options.comFileName
-            .map { path =>
+          options.comFileName match {
+            case Some(path) =>
               val fw = File(path)
               fw.writeByteArray(binaryData.toArray)
               println(s"[success]output to ${fw.pathAsString}")
               if (options.command == CaslCliCommand.Dump) {
                 dump(result.instructions, result.symbolTable)
               }
-            }
-            .getOrElse(
+            case None =>
               println(
                 s"[error] output parameter error. options(${options.argList.mkString(",")})")
-            )
-
+          }
         } else {
           println(s"[error] It failed to assemble. path:${f1.pathAsString}")
           result.errors.foreach { x =>
@@ -130,15 +122,11 @@ object ScaCasl2 {
       } else {
         println(s"[error] no input file. path:${f1.pathAsString}")
       }
-    }
   }
 
   /**
     * dump for console
     *
-    * @param instructions
-    * @param symbolTbl
-    * @return
     */
   def dump(instructions: List[InstructionRichInfo],
            symbolTbl: Map[String, Int]): Unit = {

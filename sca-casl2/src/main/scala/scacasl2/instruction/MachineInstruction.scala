@@ -5,9 +5,10 @@ import scacasl2.operand._
 /** Machine Instruction
   * NOP, LD, ST etc.
   *
-  * @param code
-  * @param ope
-  * @param info
+  * @param code Machine Instruction Code 
+  * @param ope  NoArg, Address, Word Count, Constant
+  * @param info ByteCode & Word Size
+  * @param scope Label Scope
   */
 case class MachineInstruction(code: String,
                               ope: Operand,

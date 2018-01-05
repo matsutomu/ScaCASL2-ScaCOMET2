@@ -77,7 +77,7 @@ object InstructionFactory {
     MachineInstruction.SVC -> analyzeMachineInstruction
   )
 
-  def existsInstruction(code: String) =
+  def existsInstruction(code: String): Boolean =
     this.INSTRUCTION_ANALYZE_MAP.contains(code)
 
   val INSTRUCTION_INF_MAP = Map(
@@ -143,7 +143,8 @@ object InstructionFactory {
     * parse instruction Code & operands List
     *
     * @param code Like 'START', 'END', 'DS' etc.
-    * @param operands
+    * @param operands GR0 - GR8, Address, Constants etc.
+    * @param scope Instruction Scope
     * @return
     */
   def parseOperand(code: String,
@@ -199,11 +200,11 @@ object InstructionFactory {
   private def analyzeDc =
     (code: String, operands: List[String], scope: String) => {
       val info = INSTRUCTION_INF_MAP(code)
-      if (operands.isEmpty) Left(ERR_NO_GOOD_OPERAND + s"(${code} )")
+      if (operands.isEmpty) Left(ERR_NO_GOOD_OPERAND + s"($code )")
       else {
         val elements = operands.map(element => analyzeConstants(element))
         if (elements.exists(e => e.isInstanceOf[IncorrectDescription])) {
-          Left(ERR_NO_GOOD_OPERAND + s" (${code}: ${operands.mkString(",")})")
+          Left(ERR_NO_GOOD_OPERAND + s" ($code: ${operands.mkString(",")})")
         } else
           Right(AssemblyInstruction(code, OperandDc(elements), info, scope))
       }
@@ -213,10 +214,10 @@ object InstructionFactory {
     (code: String, operands: List[String], scope: String) => {
       val info = INSTRUCTION_INF_MAP(code)
       if (operands.size == 2
-          && operands.filter(_.matches(REGEX_LABEL)).size == 2
-          && operands.filter(!NOT_ALLOW_LABEL.contains(_)).size == 2) {
-        val ope = new OperandInOrOut(operands.map(LabelOfOperand(_, None)))
-        Right(new MacroInstruction(code, ope, info, scope))
+          && operands.count(_.matches(REGEX_LABEL)) == 2
+          && operands.count(!NOT_ALLOW_LABEL.contains(_)) == 2) {
+        val ope = OperandInOrOut(operands.map(LabelOfOperand(_, None)))
+        Right(MacroInstruction(code, ope, info, scope))
       } else {
         Left(ERR_NO_GOOD_OPERAND + s"($code, ${operands.mkString(",")})")
       }
@@ -259,58 +260,60 @@ object InstructionFactory {
     *  LD GR0, 1, 1 -> binary  0x10 0, 1, 1
     *  LD GR0, GR1  -> binary  0x14 1, 1
     *
-    * @param code
-    * @param ope
+    * @param code Instruction Code (without Number)
+    * @param ope Operand
+    * @param scope Instruction Scope
     * @return
     */
   private def createMachineInstruction(
       code: String,
       ope: Operand,
       scope: String): Option[MachineInstruction] = {
+    
     val internalCode: String = (code, ope) match {
-      case (MachineInstruction.LD, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.LD, _ : OperandR_ADR_X) =>
         MachineInstruction.LD2
-      case (MachineInstruction.LD, ope: OperandR1R2) =>
+      case (MachineInstruction.LD, _ : OperandR1R2) =>
         MachineInstruction.LD1
-      case (MachineInstruction.ADDA, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.ADDA, _ : OperandR_ADR_X) =>
         MachineInstruction.ADDA2
-      case (MachineInstruction.SUBA, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.SUBA, _ : OperandR_ADR_X) =>
         MachineInstruction.SUBA2
-      case (MachineInstruction.ADDL, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.ADDL, _ : OperandR_ADR_X) =>
         MachineInstruction.ADDL2
-      case (MachineInstruction.SUBL, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.SUBL, _ : OperandR_ADR_X) =>
         MachineInstruction.SUBL2
 
-      case (MachineInstruction.ADDA, ope: OperandR1R2) =>
+      case (MachineInstruction.ADDA, _ : OperandR1R2) =>
         MachineInstruction.ADDA1
-      case (MachineInstruction.SUBA, ope: OperandR1R2) =>
+      case (MachineInstruction.SUBA, _ : OperandR1R2) =>
         MachineInstruction.SUBA1
-      case (MachineInstruction.ADDL, ope: OperandR1R2) =>
+      case (MachineInstruction.ADDL, _ : OperandR1R2) =>
         MachineInstruction.ADDL1
-      case (MachineInstruction.SUBL, ope: OperandR1R2) =>
+      case (MachineInstruction.SUBL, _ : OperandR1R2) =>
         MachineInstruction.SUBL1
 
-      case (MachineInstruction.AND, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.AND, _ : OperandR_ADR_X) =>
         MachineInstruction.AND2
-      case (MachineInstruction.OR, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.OR, _ : OperandR_ADR_X) =>
         MachineInstruction.OR2
-      case (MachineInstruction.XOR, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.XOR, _ : OperandR_ADR_X) =>
         MachineInstruction.XOR2
 
-      case (MachineInstruction.AND, ope: OperandR1R2) =>
+      case (MachineInstruction.AND, _ : OperandR1R2) =>
         MachineInstruction.AND1
-      case (MachineInstruction.OR, ope: OperandR1R2) => MachineInstruction.OR1
-      case (MachineInstruction.XOR, ope: OperandR1R2) =>
+      case (MachineInstruction.OR, _ : OperandR1R2) => MachineInstruction.OR1
+      case (MachineInstruction.XOR, _ : OperandR1R2) =>
         MachineInstruction.XOR1
 
-      case (MachineInstruction.CPA, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.CPA, _ : OperandR_ADR_X) =>
         MachineInstruction.CPA2
-      case (MachineInstruction.CPL, ope: OperandR_ADR_X) =>
+      case (MachineInstruction.CPL, _ : OperandR_ADR_X) =>
         MachineInstruction.CPL2
 
-      case (MachineInstruction.CPA, ope: OperandR1R2) =>
+      case (MachineInstruction.CPA, _ : OperandR1R2) =>
         MachineInstruction.CPA1
-      case (MachineInstruction.CPL, ope: OperandR1R2) =>
+      case (MachineInstruction.CPL, _ : OperandR1R2) =>
         MachineInstruction.CPL1
 
       case _ => code
@@ -328,36 +331,30 @@ object InstructionFactory {
     operands match {
       case Nil => Some(new OperandNoArg)
       case List(r, adr, x)
-          if (this.GENERAL_REGISTERS_MAP.contains(r) && this.INDEX_REGISTERS_MAP
-            .contains(x)) => {
+          if this.GENERAL_REGISTERS_MAP.contains(r) && 
+            this.INDEX_REGISTERS_MAP.contains(x) => 
         val adr_ope = analyzeAddressOperand(adr)
         Some(
           OperandR_ADR_X(this.GENERAL_REGISTERS_MAP(r),
                          adr_ope,
                          this.INDEX_REGISTERS_MAP(x)))
-      }
       case List(r1, r2)
-          if (this.GENERAL_REGISTERS_MAP.contains(r1) &&
-            this.GENERAL_REGISTERS_MAP.contains(r2)) => {
+          if this.GENERAL_REGISTERS_MAP.contains(r1) &&
+            this.GENERAL_REGISTERS_MAP.contains(r2) => 
         Some(
           OperandR1R2(this.GENERAL_REGISTERS_MAP(r1),
                       this.GENERAL_REGISTERS_MAP(r2)))
-      }
-      case List(r, adr) if (this.GENERAL_REGISTERS_MAP.contains(r)) => {
+      case List(r, adr) if this.GENERAL_REGISTERS_MAP.contains(r) => 
         val adr_ope = analyzeAddressOperand(adr)
         Some(OperandR_ADR_X(this.GENERAL_REGISTERS_MAP(r), adr_ope, 0))
-      }
-      case List(r) if (this.GENERAL_REGISTERS_MAP.contains(r)) => {
+      case List(r) if this.GENERAL_REGISTERS_MAP.contains(r) => 
         Some(OperandR(this.GENERAL_REGISTERS_MAP(r)))
-      }
-      case List(adr, x) => {
+      case List(adr, x) =>
         val adr_ope = analyzeAddressOperand(adr)
         Some(OperandADR_X(adr_ope, this.INDEX_REGISTERS_MAP(x)))
-      }
-      case List(adr) => {
+      case List(adr) =>
         val adr_ope = analyzeAddressOperand(adr)
         Some(OperandADR(adr_ope))
-      }
       case _ => None
     }
 

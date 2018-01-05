@@ -5,9 +5,10 @@ import scacasl2.operand._
 /**
   * Assembly Instruction
   * START, END, DS, DC
-  * @param code
-  * @param ope
-  * @param info
+  * @param code Assembly Instruction Code 
+  * @param ope  NoArg, Address, Word Count, Constant
+  * @param info ByteCode & Word Size
+  * @param scope Label Scope
   */
 case class AssemblyInstruction(code: String,
                                ope: Operand,

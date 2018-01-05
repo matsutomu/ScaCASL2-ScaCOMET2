@@ -69,8 +69,7 @@ trait Instruction {
   def convertToWords(symbolTbl: Map[String, Int]): Array[Int] =
     // #todo refactor
     this.ope match {
-      case o: OperandStart => {
-        if (o.l.isDefined) {
+      case o: OperandStart => if (o.l.isDefined) {
           symbolTbl
             .get(scope + "." + o.l.get.name)
             .map { adr_value =>
@@ -81,11 +80,9 @@ trait Instruction {
         } else {
           this.EXECUTABLE_FILE_START ++ Array.fill(6)(0)
         }
-      }
       case _: OperandNoArg => Array(info.byteCode << 8)
       case o: OperandR1R2  => Array(info.byteCode << 8 | (o.r1 << 4 | o.r2))
-      case o: OperandR_ADR_X => {
-        if (o.includeLabel) {
+      case o: OperandR_ADR_X => if (o.includeLabel) {
           symbolTbl
             .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
             .map { adr_value =>
@@ -97,10 +94,8 @@ trait Instruction {
           Array(info.byteCode << 8 | (o.r << 4 | o.x),
                 o.address.asInstanceOf[AddressOfOperand].value)
         }
-      }
       case o: OperandR => Array(info.byteCode << 8 | o.r << 4)
-      case o: OperandADR_X => {
-        if (o.includeLabel) {
+      case o: OperandADR_X => if (o.includeLabel) {
           symbolTbl
             .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
             .map { adr_value =>
@@ -112,7 +107,6 @@ trait Instruction {
           Array(info.byteCode << 8 | o.x,
                 o.address.asInstanceOf[AddressOfOperand].value)
         }
-      }
       case o: OperandInOrOut =>
         Array.concat(
           Array(info.byteCode << 8),
@@ -142,8 +136,7 @@ trait Instruction {
           })
           .toArray
 
-      case o: OperandADR => {
-        if (o.includeLabel) {
+      case o: OperandADR => if (o.includeLabel) {
           symbolTbl
             .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
             .map { adr_value =>
@@ -155,7 +148,6 @@ trait Instruction {
           Array(info.byteCode << 8 | 0,
                 o.address.asInstanceOf[AddressOfOperand].value)
         }
-      }
     }
 
 }

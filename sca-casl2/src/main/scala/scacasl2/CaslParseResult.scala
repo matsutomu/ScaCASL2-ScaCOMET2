@@ -5,16 +5,17 @@ import scacasl2.instruction.Instruction
 /**
   * Public parse result
   *
-  * @param instructions
-  * @param symbolTable
-  * @param errors
+  * @param instructions Instruction Lines And More Information
+  * @param symbolTable Label & Address
+  * @param errors Error Messages 
+  *               
   */
 case class CaslParseResult(instructions: List[InstructionRichInfo],
                            symbolTable: Map[String, Int],
                            errors: List[ParseError]) {
-  def isValid = this.errors.isEmpty
+  def isValid: Boolean = this.errors.isEmpty
 
-  def instructionModels = instructions.map { _.model }
+  def instructionModels: List[Instruction] = instructions.map { _.model }
 
 }
 

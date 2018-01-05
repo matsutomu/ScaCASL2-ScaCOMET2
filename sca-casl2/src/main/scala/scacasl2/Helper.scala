@@ -6,7 +6,7 @@ object Helper {
     * '#000f' -> 16
     * '16'    -> 16
     *
-    * @param address
+    * @param address Hex or Dec
     * @return
     */
   def parseInt(address: String): Int = {
@@ -18,10 +18,10 @@ object Helper {
     * 0x41 => 'A'
     *
     *
-    * @param i
+    * @param i Ascii Integer
     * @return
     */
-  def intToCharForCaslII(i: Int) = {
+  def intToCharForCaslII(i: Int): Char = {
     val c = i & 0x00ff
     if (0x20 <= c && c <= 0x7e) {
       c.toChar
@@ -31,8 +31,9 @@ object Helper {
   }
 
   /**
+    * Parmeter Address between 0 and MAX Memory Address  
     *
-    * @param address
+    * @param address Check Address
     * @return
     */
   def includeAddress(address: String): Boolean = {
@@ -46,7 +47,7 @@ object Helper {
         -1
       }
 
-    (0 <= convertAddr && convertAddr <= 0xFFFF)
+    0 <= convertAddr && convertAddr <= 0xFFFF
   }
 
   /**
@@ -74,7 +75,7 @@ object Helper {
     *           -----------------------
     *               1000 0000 0000 0000  (0x08000)
     *
-    * @param x
+    * @param x target binary data
     * @return Signed Short
     */
   def bitToSignedShort(x: Int): Int = x & 0xffff match {
@@ -85,7 +86,7 @@ object Helper {
   /**
     * Bit(32bit) to Word Value(Short). Internal Type is Int, cause consider overflow
     *
-    * @param x
+    * @param x target binary data
     * @return Unsigned Short
     */
   def bitToUnsignedShort(x: Int): Int = x & 0xffff

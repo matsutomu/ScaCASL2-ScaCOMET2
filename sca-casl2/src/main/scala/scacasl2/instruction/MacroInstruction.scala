@@ -5,9 +5,10 @@ import scacasl2.operand._
 /** Macro Instruction
   * IN, OUT, RPUSH, RPOP
   *
-  * @param code
-  * @param ope
-  * @param info
+ * @param code Macro Instruction Code 
+ * @param ope  NoArg, Address, Word Count, Constant
+ * @param info ByteCode & Word Size
+ * @param scope Label Scope
   */
 case class MacroInstruction(code: String,
                             ope: Operand,
@@ -15,7 +16,8 @@ case class MacroInstruction(code: String,
                             scope: String)
     extends Instruction
 
-/** For valid Macro Instructions code search
+/** 
+  * For valid Macro Instructions code search
   *
   */
 object MacroInstruction {

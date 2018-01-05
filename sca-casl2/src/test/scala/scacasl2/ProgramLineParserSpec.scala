@@ -46,35 +46,26 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
   }
 
   /**
-   *  Common Assert
-   *
-   * @param line
-   * @param opecode
-   * @param byteCode
-   * @param ope
-   * @param wSize
-   * @return
-   */
+    *  Common Assert
+    */
   private def checkInstructionConvert(line: String,
                                       opecode: String,
                                       byteCode: Int,
                                       ope: Operand,
                                       wSize: Int) = {
     ProgramLineParser.parseLine(line, 1) match {
-      case Right(result) => {
+      case Right(result) =>
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => {
-            val instruct = result.asInstanceOf[Instruction]
+          case Right(resOpe) =>
+            val instruct = resOpe.asInstanceOf[Instruction]
 
             assert(instruct.code === opecode)
             assert(instruct.info.byteCode === byteCode)
             assert(instruct.ope === ope)
             assert(instruct.wordSize === wSize)
-          }
           case Left(msg) => throw new RuntimeException(msg)
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
   }
@@ -268,13 +259,12 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
   it should " parse NOP instruction (No Good) " in {
     // no operands
     ProgramLineParser.parseLine(" NOP  START  ", 2) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => // nop
+          case Right(_) => // nop
           case Left(msg) => assert(msg === "No Good Operands (NOP: START)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
   }
@@ -283,101 +273,95 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
   it should " START Instruction (no good operands) " in {
 
     ProgramLineParser.parseLine("CASL START GR0", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR0)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START GR1", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR1)")
         }
-      }
+      
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START GR2", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR2)")
         }
-      }
+      
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START GR3", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR3)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START GR4", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR4)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START GR5", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR5)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START GR6", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR6)")
         }
-      }
+      
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START GR7", 1) match {
-      case Right(result) => {
+      case Right(result) =>
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR7)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
 
     ProgramLineParser.parseLine("CASL START main", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
-          case Right(result) => throw new RuntimeException
+          case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: main)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
 
@@ -386,13 +370,12 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
   it should " ST Instruction (no good operands) " in {
 
     ProgramLineParser.parseLine("   ST #B GR0", 1) match {
-      case Right(result) => {
+      case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
         InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (ST: #B GR0)")
         }
-      }
       case Left(msg) => throw new RuntimeException(msg)
     }
 
@@ -966,7 +949,14 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
     val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
 
-
+    // Byte vs Int is 0xFFFFFF81 vs 0x0000000081
+    assert(byteCode ===
+      List(0x43, 0x41, 0x53, 0x4C, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x34, 0x33, 0x34, 0x44, 0x00, 0x00, 0x10, 0x00, 0x00, 0x16, 0x10, 0x10, 0x00, 0x16, 0x00, 0x00,
+        0x24, 0x01, 0x14, 0x30, 0x21, 0x30, 0x00, 0x1A, 0x62, 0x00, 0x00, 0x07, 0x20, 0x00, 0x00, 0x17,
+        0x11, 0x00, 0x00, 0x19, 0x91, 0x00, 0x00, 0x19, 0x00, 0x18, 0x81, 0x00, 0x00, 0x01, 0x00, 0x30,
+        0x00, 0x01, 0x00, 0x00, 0x00, 0x05).map(e => e.toByte)
+    )
   }
 
   it should " parse sample instructions (symbol table replace) " in {
@@ -1046,7 +1036,17 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     assert(result.symbolTable  === answerSymbols)
 
     val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
-
+    
+    // Byte vs Int is 0xFFFFFF81 vs 0x0000000081
+    assert(byteCode ===
+      List(0x43, 0x41, 0x53, 0x4C, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+        0x34, 0x33, 0x34, 0x44, 0x00, 0x00, 0x10, 0x00, 0x00, 0x1C, 0x10, 0x10, 0x00, 0x1C, 0x00, 0x00, 
+        0x24, 0x01, 0x14, 0x30, 0x21, 0x30, 0x00, 0x21, 0x62, 0x00, 0x00, 0x07, 0x64, 0x00, 0x00, 0x0E, 
+        0x00, 0x00, 0x64, 0x00, 0x00, 0x10, 0x00, 0x00, 0x20, 0x00, 0x00, 0x1D, 0x11, 0x00, 0x00, 0x1F, 
+        0x91, 0x00, 0x00, 0x1F, 0x00, 0x1E, 0x81, 0x00, 0x00, 0x01, 0x00, 0x30, 0x00, 0x01, 0x00, 0x00, 
+        0x00, 0x1D, 0x00, 0x05)
+        .map(e => e.toByte)
+    )
 
   }
 

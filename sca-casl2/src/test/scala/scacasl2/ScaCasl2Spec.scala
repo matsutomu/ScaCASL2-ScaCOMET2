@@ -19,18 +19,18 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
 
     val currentDirectory = new java.io.File(".").getCanonicalPath
 
-    assert(this.runCasl2Out(List(s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas").toArray) ===
-      s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/count1.com
+    assert(this.runCasl2Out(List(s"$currentDirectory/sca-casl2/src/test/resources/count1.cas").toArray) ===
+      s"""[success]output to $currentDirectory/sca-casl2/src/test/resources/count1.com
         |""".stripMargin)
 
-    assert(this.runCasl2Out(List(s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas",
-      s"${currentDirectory}/sca-casl2/src/test/resources/test.com").toArray) ===
-      s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/test.com
+    assert(this.runCasl2Out(List(s"$currentDirectory/sca-casl2/src/test/resources/count1.cas",
+      s"$currentDirectory/sca-casl2/src/test/resources/test.com").toArray) ===
+      s"""[success]output to $currentDirectory/sca-casl2/src/test/resources/test.com
          |""".stripMargin)
 
-    assert(this.runCasl2Out(List("-a", s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas",
-      s"${currentDirectory}/sca-casl2/src/test/resources/test.com").toArray) ===
-      s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/test.com
+    assert(this.runCasl2Out(List("-a", s"$currentDirectory/sca-casl2/src/test/resources/count1.cas",
+      s"$currentDirectory/sca-casl2/src/test/resources/test.com").toArray) ===
+      s"""[success]output to $currentDirectory/sca-casl2/src/test/resources/test.com
          |Addr	Op		Line	Source code
          |#0000	#7001		5	       PUSH    0, GR1        ;
          |#0001	#0000
@@ -63,13 +63,13 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
   it can " not execute " in {
     val currentDirectory = new java.io.File(".").getCanonicalPath
 
-    assert(this.runCasl2Out(List(s"${currentDirectory}/sca-casl2/src/test/resources/count1_err.cas").toArray) ===
-      s"""[error] It failed to assemble. path:${currentDirectory}/sca-casl2/src/test/resources/count1_err.cas
+    assert(this.runCasl2Out(List(s"$currentDirectory/sca-casl2/src/test/resources/count1_err.cas").toArray) ===
+      s"""[error] It failed to assemble. path:$currentDirectory/sca-casl2/src/test/resources/count1_err.cas
           |line: 10, message:  No Good Operands (LAD: GR2,1,GR0)
           |""".stripMargin + "\t\t  " + f"%n")
 
     assert(this.runCasl2Out(List("count1.cas").toArray) ===
-    s"""[error] no input file. path:${currentDirectory}/count1.cas
+    s"""[error] no input file. path:$currentDirectory/count1.cas
        |""".stripMargin)
 
     assert(this.runCasl2Out(List("-D","count1.cas").toArray) ===
@@ -84,8 +84,8 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
         |  -v --version display version and exit
         |""".stripMargin)
 
-    assert(this.runCasl2Out(List("-a",s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas","count1.com","count1.com").toArray) ===
-      f"[error] output parameter error. options(${currentDirectory}/sca-casl2/src/test/resources/count1.cas,count1.com,count1.com)%n")
+    assert(this.runCasl2Out(List("-a",s"$currentDirectory/sca-casl2/src/test/resources/count1.cas","count1.com","count1.com").toArray) ===
+      f"[error] output parameter error. options($currentDirectory/sca-casl2/src/test/resources/count1.cas,count1.com,count1.com)%n")
 
   }
 
@@ -94,10 +94,10 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
     val currentDirectory = new java.io.File(".").getCanonicalPath
 
     val test = this.runCasl2Out(List("-a",
-      s"${currentDirectory}/sca-casl2/src/test/resources/count1.cas").toArray)
+      s"$currentDirectory/sca-casl2/src/test/resources/count1.cas").toArray)
 
     assert(test ===
-      s"""[success]output to ${currentDirectory}/sca-casl2/src/test/resources/count1.com
+      s"""[success]output to $currentDirectory/sca-casl2/src/test/resources/count1.com
          |Addr	Op		Line	Source code
          |#0000	#7001		5	       PUSH    0, GR1        ;
          |#0001	#0000
