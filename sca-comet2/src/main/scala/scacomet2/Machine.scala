@@ -32,8 +32,8 @@ class Machine {
   val gr7 = IndexRegister(0)
 
   private val INITIAL_STACK_POINTER_ADR = 0xFF00
-  val gr8 = StackPointer(INITIAL_STACK_POINTER_ADR)
-  val SP = gr8
+  val gr8: StackPointer = StackPointer(INITIAL_STACK_POINTER_ADR)
+  val SP: StackPointer = gr8
 
   private def stackPointer = this.gr8.word
   private def stackPointer(v: Int): Unit = this.gr8.word = v
@@ -133,13 +133,12 @@ class Machine {
 
   private var callLevelCounter = 0
   private var stepCounter = 0
-  def stepCount = stepCounter
+  def stepCount: Int = stepCounter
 
   private var programRunning = false
 
   private var breakPoints: Seq[Int] = Seq.empty[Int]
 
-  //#todo case class Decode[+A <: Operand](argType: OperandType, execute: A => Unit )
   private case class Decode(argType: OperandType, execute: Operand => Unit)
 
   private val INSTRUCTION_MAP: Map[Int, Decode] = Map(
@@ -201,7 +200,6 @@ class Machine {
   /**
     * Binary Code run 1 step
     *
-    * @param address
     */
   private def execute(address: Int): Unit = {
     val word1 = this.memory(address)
@@ -215,10 +213,6 @@ class Machine {
   /**
     * Parse BinaryCode
     *
-    * @param word1
-    * @param word2
-    * @param opeCode
-    * @return
     */
   private def decodeOperand(word1: Int, word2: Int, opeCode: Short): Operand = {
 
@@ -227,32 +221,30 @@ class Machine {
       case OperandType.ArgNo => OperandNoArg()
       case OperandType.ArgR1R2 =>
         OperandR1R2(
-          ((word1 & 0x00f0) >> 4), // 0000 0000 **** 0000
-          ((word1 & 0x000f)) // 0000 0000 0000 ****
+          (word1 & 0x00f0) >> 4, // 0000 0000 **** 0000
+           word1 & 0x000f        // 0000 0000 0000 ****
         )
 
-      case OperandType.ArgRAdrX => {
+      case OperandType.ArgRAdrX => 
         OperandR_ADR_X(
-          ((word1 & 0x00f0) >> 4), // adr  : 0000 0000 **** 0000
+          (word1 & 0x00f0) >> 4, // adr  : 0000 0000 **** 0000
           AddressOfOperand(
-            ((word2 & 0xffff)).toString,
-            ((word2 & 0xffff)).toShort), // adr+1: **** **** **** ****
-          ((word1 & 0x000f)) // adr  : 0000 0000 0000 ****
+            (word2 & 0xffff).toString,
+            (word2 & 0xffff).toShort), // adr+1: **** **** **** ****
+          word1 & 0x000f            // adr  : 0000 0000 0000 ****
         )
-      }
 
-      case OperandType.ArgAdrX => {
+      case OperandType.ArgAdrX => 
         OperandADR_X(
           AddressOfOperand(
-            ((word2 & 0xffff)).toString,
-            ((word2 & 0xffff)).toShort), // adr+1: **** **** **** ****
-          ((word1 & 0x000f)) // 0000 0000 0000 ****
+            (word2 & 0xffff).toString,
+            (word2 & 0xffff).toShort), // adr+1: **** **** **** ****
+          word1 & 0x000f // 0000 0000 0000 ****
         )
-      }
 
       case OperandType.ArgR =>
         OperandR(
-          ((word1 & 0x00f0) >> 4) // 0000 0000 **** 0000
+          (word1 & 0x00f0) >> 4 // 0000 0000 **** 0000
         )
 
     }
@@ -324,14 +316,13 @@ class Machine {
       case "ZF"  => (target, this.ZF.toString.toInt)
       case "PR"  => (target, this.PR.word)
       case grs() => (target, generalRegisters(target.takeRight(1).toInt).word)
-      case _ => {
+      case _ => 
         val address = Helper.parseInt(target)
         if (address < 0 || 0xffff < address) {
           throw new RuntimeException
         } else {
           (f"#$address%04X", this.memory(address))
         }
-      }
     }
 
     if (target.matches("OF|SF|ZF") || decimal) {
@@ -344,8 +335,8 @@ class Machine {
   /**
     *  Binary Data TO CASLII Code
     *
-    * @param startAddress
-    * @param stepCount
+    * @param startAddress Disassemble Start Address
+    * @param stepCount Instruction Count
     * @return
     */
   def disassemble(startAddress: Int, stepCount: Int): List[String] = {
@@ -365,8 +356,7 @@ class Machine {
         InstructionFactory.INSTRUCTION_INF_MAP
           .find(p => p._2.byteCode == opeCode)
           .map {
-            case (ope, info) => {
-
+            case (ope, info) =>
               val disassembleCode = ope match {
                 case "IN" | "OUT" =>
                   f"${ope.replaceAll("[12]", "")}%-8s #$word2%04X, #$word3%04X"
@@ -385,7 +375,6 @@ class Machine {
                   throw new IllegalArgumentException(
                     s"not supported word size${info.wordSize}")
               })
-            }
           }
           .getOrElse {
             val c = Helper.intToCharForCaslII(word1)
@@ -408,7 +397,7 @@ class Machine {
     val disassemble = this.disassemble(this.PR.word, 1).mkString
     List(
       f"PR #${this.PR.word}%04X [ $disassemble%-30s ]  STEP ${this.stepCount}%d",
-      f"SP #${this.SP.word}%04X(${this.SP.word}%7d) FR(OF, SF, ZF) ${this.flagLiteral}%3s  (${this.fr.word}%7d)"
+      f"SP #${this.SP.word}%04X(${this.SP.word}%7d) FR(OF, SF, ZF) ${this.flagLiteral()}%3s  (${this.fr.word}%7d)"
     ) :::
       (this.generalRegisters
       .filter(p => !p.isInstanceOf[StackPointer])
@@ -429,11 +418,11 @@ class Machine {
     * Instruction Code
     *
    *****************************************************************************/
-  def Nop = (arg: Operand) => {
+  def Nop: Operand => Unit  = (_: Operand) => {
     this.PR ++ 1
   }
 
-  def load2 = (ope: Operand) => {
+  def load2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     this.generalRegisters(arg.r).word =
@@ -445,21 +434,21 @@ class Machine {
     ()
   }
 
-  def store = (ope: Operand) => {
+  def store: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
     val eAdr = this.getEffectiveAddress(arg.address.adrValue, arg.x)
     this.memory(eAdr) = this.generalRegisters(arg.r).word.toShort
     this.PR ++ 2
   }
 
-  def loadAddress = (ope: Operand) => {
+  def loadAddress: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
     this.generalRegisters(arg.r).word =
       this.getEffectiveAddress(arg.address.adrValue, arg.x)
     this.PR ++ 2
   }
 
-  def load1 = (ope: Operand) => {
+  def load1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     this.generalRegisters(arg.r1).word = this.generalRegisters(arg.r2).word
     this.changeFlags(this.generalRegisters(arg.r1).word,
@@ -468,7 +457,7 @@ class Machine {
     this.PR ++ 1
   }
 
-  def addArithmetic2 = (ope: Operand) => {
+  def addArithmetic2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
@@ -481,18 +470,18 @@ class Machine {
 
   }
 
-  def addLogical2 = (ope: Operand) => {
+  def addLogical2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
     val result = this.generalRegisters(arg.r).word + eAdr
-    this.generalRegisters(arg.r).word = (result) & 0xffff
+    this.generalRegisters(arg.r).word = result & 0xffff
     this.changeFlags(result, InstructionsOfAorL.LogicalInstruct)
     this.PR ++ 2
 
   }
 
-  def subArithmetic2 = (ope: Operand) => {
+  def subArithmetic2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
@@ -505,17 +494,17 @@ class Machine {
 
   }
 
-  def subLogical2 = (ope: Operand) => {
+  def subLogical2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
     val result = this.generalRegisters(arg.r).word - eAdr
-    this.generalRegisters(arg.r).word = (result) & 0xffff
+    this.generalRegisters(arg.r).word = result & 0xffff
     this.changeFlags(result, InstructionsOfAorL.LogicalInstruct)
     this.PR ++ 2
   }
 
-  def and2 = (ope: Operand) => {
+  def and2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
@@ -529,7 +518,7 @@ class Machine {
 
   }
 
-  def or2 = (ope: Operand) => {
+  def or2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
@@ -543,7 +532,7 @@ class Machine {
 
   }
 
-  def exclusiveOr2 = (ope: Operand) => {
+  def exclusiveOr2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
@@ -557,7 +546,7 @@ class Machine {
 
   }
 
-  private def compareArithmetic2 = (ope: Operand) => {
+  private def compareArithmetic2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
     val diff = Helper
@@ -567,7 +556,7 @@ class Machine {
     this.PR ++ 2
   }
 
-  private def compareLogical2 = (ope: Operand) => {
+  private def compareLogical2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
     val eAdr = this.getValueEffectiveAddress(arg.address.adrValue, arg.x)
     val diff = this.generalRegisters(arg.r).word - eAdr
@@ -576,7 +565,7 @@ class Machine {
 
   }
 
-  def addArithmetic1 = (ope: Operand) => {
+  def addArithmetic1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     val result = Helper
       .bitToSignedShort(this.generalRegisters(arg.r1).word) + Helper
@@ -587,18 +576,18 @@ class Machine {
 
   }
 
-  def addLogical1 = (ope: Operand) => {
+  def addLogical1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     val result = this.generalRegisters(arg.r1).word + this
       .generalRegisters(arg.r2)
       .word
-    this.generalRegisters(arg.r1).word = (result) & 0xffff
+    this.generalRegisters(arg.r1).word = result & 0xffff
     this.changeFlags(result, InstructionsOfAorL.LogicalInstruct)
     this.PR ++ 1
 
   }
 
-  def subArithmetic1 = (ope: Operand) => {
+  def subArithmetic1: Operand => Unit = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     val result = Helper
       .bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper
@@ -609,18 +598,18 @@ class Machine {
 
   }
 
-  def subLogical1 = (ope: Operand) => {
+  def subLogical1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     val result = this.generalRegisters(arg.r1).word - this
       .generalRegisters(arg.r2)
       .word
-    this.generalRegisters(arg.r1).word = (result) & 0xffff
+    this.generalRegisters(arg.r1).word = result & 0xffff
     this.changeFlags(result, InstructionsOfAorL.LogicalInstruct)
     this.PR ++ 1
 
   }
 
-  def and1 = (ope: Operand) => {
+  def and1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
 
     this.generalRegisters(arg.r1).word = this
@@ -633,7 +622,7 @@ class Machine {
 
   }
 
-  def or1 = (ope: Operand) => {
+  def or1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
 
     this.generalRegisters(arg.r1).word = this
@@ -646,7 +635,7 @@ class Machine {
 
   }
 
-  def exclusiveOr1 = (ope: Operand) => {
+  def exclusiveOr1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
 
     this.generalRegisters(arg.r1).word = this
@@ -659,7 +648,7 @@ class Machine {
 
   }
 
-  private def compareArithmetic1 = (ope: Operand) => {
+  private def compareArithmetic1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     val diff = Helper
       .bitToSignedShort(this.generalRegisters(arg.r1).word) - Helper
@@ -668,7 +657,7 @@ class Machine {
     this.PR ++ 1
   }
 
-  private def compareLogical1 = (ope: Operand) => {
+  private def compareLogical1: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR1R2]
     val diff = this.generalRegisters(arg.r1).word - this
       .generalRegisters(arg.r2)
@@ -677,7 +666,7 @@ class Machine {
     this.PR ++ 1
   }
 
-  def shiftLeftArithmetic2 = (ope: Operand) => {
+  def shiftLeftArithmetic2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val v = this.getEffectiveAddress(arg.address.adrValue, arg.x)
@@ -704,7 +693,7 @@ class Machine {
 
   }
 
-  def shiftRightArithmetic2 = (ope: Operand) => {
+  def shiftRightArithmetic2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val v = this.getEffectiveAddress(arg.address.adrValue, arg.x)
@@ -731,7 +720,7 @@ class Machine {
 
   }
 
-  def shiftLeftLogical2 = (ope: Operand) => {
+  def shiftLeftLogical2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val v = this.getEffectiveAddress(arg.address.adrValue, arg.x)
@@ -752,7 +741,7 @@ class Machine {
     this.PR ++ 2
   }
 
-  def shiftRightLogical2 = (ope: Operand) => {
+  def shiftRightLogical2: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR_ADR_X]
 
     val v = this.getEffectiveAddress(arg.address.adrValue, arg.x)
@@ -773,47 +762,44 @@ class Machine {
     this.PR ++ 2
   }
 
-  private def jumpByCondition(arg: OperandADR_X, condition: Boolean) = {
-    if (condition) {
-      this.PR.word = this.getEffectiveAddress(arg.address.adrValue, arg.x)
-    } else {
-      this.PR ++ 2
-    }
+  private def jumpByCondition(arg: OperandADR_X, condition: Boolean): Unit = {
+    if (condition) this.PR.word = this.getEffectiveAddress(arg.address.adrValue, arg.x)
+    else this.PR ++ 2
   }
 
-  private def jumpOnPlus = (ope: Operand) => {
+  private def jumpOnPlus: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
     jumpByCondition(
       arg,
       this.SF == BinaryNumber.Zero && this.ZF == BinaryNumber.Zero)
   }
 
-  private def jumpOnMinus = (ope: Operand) => {
+  private def jumpOnMinus: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
     jumpByCondition(arg, this.SF == BinaryNumber.One)
   }
 
-  private def jumpOnNonZero = (ope: Operand) => {
+  private def jumpOnNonZero: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
     jumpByCondition(arg, this.ZF == BinaryNumber.Zero)
   }
 
-  private def jumpOnZero = (ope: Operand) => {
+  private def jumpOnZero: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
     jumpByCondition(arg, this.ZF == BinaryNumber.One)
   }
 
-  def jumpOnOverflow = (ope: Operand) => {
+  def jumpOnOverflow: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
     jumpByCondition(arg, this.OF == BinaryNumber.One)
   }
 
-  def unconditionalJump = (ope: Operand) => {
+  def unconditionalJump: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
     jumpByCondition(arg, true)
   }
 
-  def push = (ope: Operand) => {
+  def push: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
 
     this.stackPointer(this.stackPointer - 1)
@@ -822,14 +808,14 @@ class Machine {
     this.PR ++ 2
   }
 
-  def pop = (ope: Operand) => {
+  def pop: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandR]
     this.generalRegisters(arg.r).word = this.memory(this.stackPointer)
     this.stackPointer(this.stackPointer + 1)
     this.PR ++ 1
   }
 
-  def call = (ope: Operand) => {
+  def call: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
 
     this.stackPointer(this.stackPointer - 1)
@@ -841,7 +827,7 @@ class Machine {
 
   }
 
-  def ret = (ope: Operand) => {
+  def ret: Operand => Unit  = (_: Operand) => {
     if (this.callLevelCounter == 0) {
       this.stepCounter = this.stepCounter + 1
       this.programRunning = false
@@ -853,17 +839,17 @@ class Machine {
     }
   }
 
-  def in = (ope: Operand) => {
+  def in : Operand => Unit = (_: Operand) => {
 
     var inputString = scala.io.StdIn.readLine()
     val startAdr = this.memory(this.PR.word + 1)
     val lengthAdr = this.memory(this.PR.word + 2)
 
-    if (256 < inputString.size) {
+    if (256 < inputString.length) {
       inputString = inputString.substring(0, 256)
     }
 
-    this.memory(lengthAdr) = inputString.size.toShort
+    this.memory(lengthAdr) = inputString.length.toShort
     inputString.zipWithIndex.foreach {
       case (c: Char, i: Int) =>
         this.memory(startAdr + i) = c.toShort
@@ -873,7 +859,7 @@ class Machine {
 
   }
 
-  def out = (ope: Operand) => {
+  def out: Operand => Unit  = (_: Operand) => {
     var outputString = ""
     val startAdr = this.memory(this.PR.word + 1)
     val lengthAdr = this.memory(this.PR.word + 2)
@@ -892,25 +878,25 @@ class Machine {
     this.PR ++ 3
   }
 
-  def rpush = (ope: Operand) => {
+  def rpush: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandNoArg]
-    for (r <- this.generalRegisters if (r != gr0 && r != gr8)) {
+    for (r <- this.generalRegisters if r != gr0 && r != gr8) {
       this.stackPointer(this.stackPointer - 1)
       this.memory(this.stackPointer) = r.word.toShort
     }
     this.PR ++ 1
   }
 
-  def rpop = (ope: Operand) => {
+  def rpop: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandNoArg]
-    for (r <- this.generalRegisters.reverse if (r != gr0 && r != gr8)) {
+    for (r <- this.generalRegisters.reverse if r != gr0 && r != gr8) {
       r.word = this.memory(this.stackPointer)
       this.stackPointer(this.stackPointer + 1)
     }
     this.PR ++ 1
   }
 
-  def supervisorCall = (ope: Operand) => {
+  def supervisorCall: Operand => Unit  = (ope: Operand) => {
     val arg = ope.asInstanceOf[OperandADR_X]
 
     // NOP
