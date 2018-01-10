@@ -743,6 +743,18 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
   }
 
+  it should " parse sample instructions (Equal Constatnts Replace Error Constants  ) " in {
+
+    val programLine = "         OUT     =1234, =5"
+
+    val result = ProgramLineParser.parseLine(programLine, 0)
+    val innresult = InnerParseResult.default().copy(lineNumber = Int.MaxValue - 1).parseEachLine(result.right.get)
+    
+    assert(innresult === InnerParseResult(2147483647,List.empty,Map.empty,List(ParseError(2147483646,"No Good Operands(OUT, EL2147483646C1,EL2147483646C2)","","         OUT     =1234, =5")),
+      List(AdditionalDc(".EL2147483646C1",AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1234",1234))),InstructionInfo(0,0),"")), 
+        AdditionalDc(".EL2147483646C2",AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),""))),List.empty,false,false,"",0,Some(List("EL2147483646C1", "EL2147483646C2"))))
+  }
+
   it should " parse sample instructions (DS) " in {
 
     val programLines = List(
