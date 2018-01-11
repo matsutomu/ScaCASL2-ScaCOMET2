@@ -100,4 +100,5 @@ class OperandsSpec extends FlatSpec with DiagrammedAssertions {
 
   }
 
+
 }

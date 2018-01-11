@@ -59,7 +59,7 @@ object ProgramLineParser extends RegexParsers {
     * Parser Combinator
    ***********************************/
   private def instructions =
-    inst_line_with_ope | inst_line_no_ope | comment_line
+    inst_line_with_ope | inst_line_no_ope | comment_line 
 
   private def inst_line_with_ope =
     opt(label) ~ casl_white_space ~ code ~ operands ~ opt(annotation) ^^ {
@@ -70,7 +70,7 @@ object ProgramLineParser extends RegexParsers {
                         cmt,
                         0,
                         "")
-    }
+    } 
 
   private def inst_line_no_ope =
     opt(label) ~ casl_white_space ~ code ~ opt(annotation) ^^ {
@@ -146,8 +146,7 @@ object ProgramLineParser extends RegexParsers {
               Left(InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE +
                 s"(${r.code}, ${r.operands.getOrElse(List.empty).mkString(",")})")
         }
-      case Failure(msg, _) => Left(msg)
-      case Error(msg, _)   => Left(msg)
+      case NoSuccess(msg, _) => Left(msg)
     }
 
   /**
