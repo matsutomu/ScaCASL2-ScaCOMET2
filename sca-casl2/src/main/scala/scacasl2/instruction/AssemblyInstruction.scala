@@ -21,12 +21,12 @@ case class AssemblyInstruction(code: String,
       (ope match {
         case o: OperandDs => o.decimal
         case o: OperandDc =>
+          // Only ConstsStringOfOperand, ConstsNumOfOperand, LabelOfOperand
+          // But not sealed class 
           o.consts.foldLeft(0)((acc, e) => {
             acc + (e match {
               case es: ConstsStringOfOperand => es.array_char.size
-              case _: ConstsNumOfOperand     => 1
-              case _: LabelOfOperand         => 1
-              case _                         => 0
+              case _  => 1 
             })
           })
         case _ => 0

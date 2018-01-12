@@ -19,9 +19,7 @@ object ScaCasl2 {
     */
   def main(args: Array[String]): Unit = {
     try {
-      val options = this.parseArgs(args)
-      this.parseFile(options)
-
+      this.parseFile(this.parseArgs(args))
     } catch {
       case e: Exception => 
         e.printStackTrace()

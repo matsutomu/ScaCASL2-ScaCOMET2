@@ -1067,4 +1067,593 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
   }
 
+  it should " parse sample instructions (symbol table replace Address And Index Register) " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "         AND     GR3, GR3   ; for unit test",
+      "         AND     GR4, GR4   ; for unit test",
+      "BEGIN    NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "LOOP     NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP, GR7",
+      "         JUMP    14",
+      "         NOP",
+      "         JUMP    16",
+      "         NOP",
+      "         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM1     DC      1",
+      "NUM2     DC      #30",
+      "LEN      DC      1",
+      "OUTPUT   DS      1",
+      "NUM3     DC      NUM2",
+      "         END"
+    )
+
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+
+
+    val answer = List(AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))),InstructionInfo(-100,0),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(3,3),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(4,4),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionInfo(36,1),"ADDER"),
+      MachineInstruction("LD1",OperandR1R2(3,0),InstructionInfo(20,1),"ADDER"),
+      MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL10C2",None),0),InstructionInfo(33,2),"ADDER"),
+      MachineInstruction("JNZ",OperandADR_X(LabelOfOperand("LOOP",None), 7),InstructionInfo(98,2),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("14",14)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("16",16)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM2",None),0),InstructionInfo(32,2),"ADDER"),
+      MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionInfo(17,2),"ADDER"),
+      MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionInfo(145,3),"ADDER"),
+      MachineInstruction("RET",OperandNoArg(),InstructionInfo(129,1),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DS",OperandDs(1),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(LabelOfOperand("NUM2",None))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),"ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.LOOP" -> 7,
+      "ADDER.BEGIN" -> 2,
+      "ADDER.NUM1" -> 28,
+      "ADDER.EL10C2" -> 33,
+      "ADDER.NUM2" -> 29,
+      "ADDER.OUTPUT" -> 31,
+      "ADDER.LEN" -> 30,
+      "ADDER.NUM3" -> 32,
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+
+    // Byte vs Int is 0xFFFFFF81 vs 0x0000000081
+    assert(byteCode ===
+      List(0x43, 0x41, 0x53, 0x4C, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x34, 0x33, 0x34, 0x44, 0x00, 0x00, 0x10, 0x00, 0x00, 0x1C, 0x10, 0x10, 0x00, 0x1C, 0x00, 0x00,
+        0x24, 0x01, 0x14, 0x30, 0x21, 0x30, 0x00, 0x21, 0x62, 0x07, 0x00, 0x07, 0x64, 0x00, 0x00, 0x0E,
+        0x00, 0x00, 0x64, 0x00, 0x00, 0x10, 0x00, 0x00, 0x20, 0x00, 0x00, 0x1D, 0x11, 0x00, 0x00, 0x1F,
+        0x91, 0x00, 0x00, 0x1F, 0x00, 0x1E, 0x81, 0x00, 0x00, 0x01, 0x00, 0x30, 0x00, 0x01, 0x00, 0x00,
+        0x00, 0x1D, 0x00, 0x05)
+        .map(e => e.toByte)
+    )
+
+  }
+
+  it should " parse sample instructions (symbol table replace error 'START') " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "         AND     GR3, GR3   ; for unit test",
+      "         AND     GR4, GR4   ; for unit test",
+      "         NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "LOOP     NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP",
+      "         JUMP    14",
+      "         NOP",
+      "         JUMP    16",
+      "         NOP",
+      "         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM1     DC      1",
+      "NUM2     DC      #30",
+      "LEN      DC      1",
+      "OUTPUT   DS      1",
+      "NUM3     DC      NUM2",
+      "         END"
+    )
+
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+
+
+    val answer = List(AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))),InstructionInfo(-100,0),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(3,3),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(4,4),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionInfo(36,1),"ADDER"),
+      MachineInstruction("LD1",OperandR1R2(3,0),InstructionInfo(20,1),"ADDER"),
+      MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL10C2",None),0),InstructionInfo(33,2),"ADDER"),
+      MachineInstruction("JNZ",OperandADR(LabelOfOperand("LOOP",None)),InstructionInfo(98,2),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("14",14)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("16",16)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM2",None),0),InstructionInfo(32,2),"ADDER"),
+      MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionInfo(17,2),"ADDER"),
+      MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionInfo(145,3),"ADDER"),
+      MachineInstruction("RET",OperandNoArg(),InstructionInfo(129,1),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DS",OperandDs(1),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(LabelOfOperand("NUM2",None))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),"ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.LOOP" -> 7,
+      "ADDER.NUM1" -> 28,
+      "ADDER.EL10C2" -> 33,
+      "ADDER.NUM2" -> 29,
+      "ADDER.OUTPUT" -> 31,
+      "ADDER.LEN" -> 30,
+      "ADDER.NUM3" -> 32,
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
+      val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    }
+    assert(caught.getMessage === "LABEL not replace address(START, OperandStart(Some(LabelOfOperand(BEGIN,None))))")
+  }
+
+  it should " parse sample instructions (symbol table replace error 'R_ADR_X') " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "         AND     GR3, GR3   ; for unit test",
+      "         AND     GR4, GR4   ; for unit test",
+      "BEGIN    NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "LOOP     NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP",
+      "         JUMP    14",
+      "         NOP",
+      "         JUMP    16",
+      "         NOP",
+      "         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM0     DC      1",
+      "NUM2     DC      #30",
+      "LEN      DC      1",
+      "OUTPUT   DS      1",
+      "NUM3     DC      NUM2",
+      "         END"
+    )
+
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+
+
+    val answer = List(AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))),InstructionInfo(-100,0),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(3,3),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(4,4),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionInfo(36,1),"ADDER"),
+      MachineInstruction("LD1",OperandR1R2(3,0),InstructionInfo(20,1),"ADDER"),
+      MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL10C2",None),0),InstructionInfo(33,2),"ADDER"),
+      MachineInstruction("JNZ",OperandADR(LabelOfOperand("LOOP",None)),InstructionInfo(98,2),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("14",14)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("16",16)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM2",None),0),InstructionInfo(32,2),"ADDER"),
+      MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionInfo(17,2),"ADDER"),
+      MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionInfo(145,3),"ADDER"),
+      MachineInstruction("RET",OperandNoArg(),InstructionInfo(129,1),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DS",OperandDs(1),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(LabelOfOperand("NUM2",None))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),"ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.LOOP" -> 7,
+      "ADDER.BEGIN" -> 2,
+      "ADDER.NUM0" -> 28,
+      "ADDER.EL10C2" -> 33,
+      "ADDER.NUM2" -> 29,
+      "ADDER.OUTPUT" -> 31,
+      "ADDER.LEN" -> 30,
+      "ADDER.NUM3" -> 32,
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
+      val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    }
+    assert(caught.getMessage === "LABEL not replace address(LD2, OperandR_ADR_X(0,LabelOfOperand(NUM1,None),0))")
+  }
+
+  it should " parse sample instructions (symbol table replace error 'Operand ADR') " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "         AND     GR3, GR3   ; for unit test",
+      "         AND     GR4, GR4   ; for unit test",
+      "BEGIN    NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "         NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP",
+      "         JUMP    14",
+      "         NOP",
+      "         JUMP    16",
+      "         NOP",
+      "         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM1     DC      1",
+      "NUM2     DC      #30",
+      "LEN      DC      1",
+      "OUTPUT   DS      1",
+      "NUM3     DC      NUM2",
+      "         END"
+    )
+
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+
+
+    val answer = List(AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))),InstructionInfo(-100,0),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(3,3),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(4,4),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionInfo(36,1),"ADDER"),
+      MachineInstruction("LD1",OperandR1R2(3,0),InstructionInfo(20,1),"ADDER"),
+      MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL10C2",None),0),InstructionInfo(33,2),"ADDER"),
+      MachineInstruction("JNZ",OperandADR(LabelOfOperand("LOOP",None)),InstructionInfo(98,2),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("14",14)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("16",16)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM2",None),0),InstructionInfo(32,2),"ADDER"),
+      MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionInfo(17,2),"ADDER"),
+      MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionInfo(145,3),"ADDER"),
+      MachineInstruction("RET",OperandNoArg(),InstructionInfo(129,1),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DS",OperandDs(1),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(LabelOfOperand("NUM2",None))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),"ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.BEGIN" -> 2,
+      "ADDER.NUM1" -> 28,
+      "ADDER.EL10C2" -> 33,
+      "ADDER.NUM2" -> 29,
+      "ADDER.OUTPUT" -> 31,
+      "ADDER.LEN" -> 30,
+      "ADDER.NUM3" -> 32,
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
+      val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    }
+    assert(caught.getMessage === "LABEL not replace address(JNZ, OperandADR(LabelOfOperand(LOOP,None)))")
+
+
+  }
+
+  it should " parse sample instructions (symbol table replace error 'OUT') " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "         AND     GR3, GR3   ; for unit test",
+      "         AND     GR4, GR4   ; for unit test",
+      "BEGIN    NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "LOOP     NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP",
+      "         JUMP    14",
+      "         NOP",
+      "         JUMP    16",
+      "         NOP",
+      "         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM1     DC      1",
+      "NUM2     DC      #30",
+      "         DC      1",
+      "OUTPUT   DS      1",
+      "NUM3     DC      NUM2",
+      "         END"
+    )
+
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+
+
+    val answer = List(AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))),InstructionInfo(-100,0),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(3,3),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(4,4),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionInfo(36,1),"ADDER"),
+      MachineInstruction("LD1",OperandR1R2(3,0),InstructionInfo(20,1),"ADDER"),
+      MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL10C2",None),0),InstructionInfo(33,2),"ADDER"),
+      MachineInstruction("JNZ",OperandADR(LabelOfOperand("LOOP",None)),InstructionInfo(98,2),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("14",14)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("16",16)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM2",None),0),InstructionInfo(32,2),"ADDER"),
+      MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionInfo(17,2),"ADDER"),
+      MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionInfo(145,3),"ADDER"),
+      MachineInstruction("RET",OperandNoArg(),InstructionInfo(129,1),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DS",OperandDs(1),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(LabelOfOperand("NUM2",None))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),"ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.LOOP" -> 7,
+      "ADDER.BEGIN" -> 2,
+      "ADDER.NUM1" -> 28,
+      "ADDER.EL10C2" -> 33,
+      "ADDER.NUM2" -> 29,
+      "ADDER.OUTPUT" -> 31,
+      "ADDER.NUM3" -> 32,
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
+      val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    }
+    assert(caught.getMessage === "LABEL not replace address(OUT, OperandInOrOut(List(LabelOfOperand(OUTPUT,None), LabelOfOperand(LEN,None))))")
+
+
+  }
+
+
+  it should " parse sample instructions (symbol table replace error 'DC')  " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "         AND     GR3, GR3   ; for unit test",
+      "         AND     GR4, GR4   ; for unit test",
+      "BEGIN    NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "LOOP     NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP",
+      "         JUMP    14",
+      "         NOP",
+      "         JUMP    16",
+      "         NOP",
+      "         ADDA    GR0, NUM1   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM1     DC      1",
+      "         DC      #30",
+      "LEN      DC      1",
+      "OUTPUT   DS      1",
+      "NUM3     DC      NUM2",
+      "         END"
+    )
+
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+
+
+    val answer = List(AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))),InstructionInfo(-100,0),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(3,3),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(4,4),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionInfo(36,1),"ADDER"),
+      MachineInstruction("LD1",OperandR1R2(3,0),InstructionInfo(20,1),"ADDER"),
+      MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL10C2",None),0),InstructionInfo(33,2),"ADDER"),
+      MachineInstruction("JNZ",OperandADR(LabelOfOperand("LOOP",None)),InstructionInfo(98,2),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("14",14)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("16",16)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(32,2),"ADDER"),
+      MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionInfo(17,2),"ADDER"),
+      MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionInfo(145,3),"ADDER"),
+      MachineInstruction("RET",OperandNoArg(),InstructionInfo(129,1),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DS",OperandDs(1),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(LabelOfOperand("NUM2",None))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),"ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.LOOP" -> 7,
+      "ADDER.BEGIN" -> 2,
+      "ADDER.NUM1" -> 28,
+      "ADDER.EL10C2" -> 33,
+      "ADDER.OUTPUT" -> 31,
+      "ADDER.LEN" -> 30,
+      "ADDER.NUM3" -> 32,
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
+      val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    }
+    assert(caught.getMessage === "LABEL not replace address(DC, OperandDc(List(LabelOfOperand(NUM2,None))))")
+    
+  }
+
+
+
+  it should " parse sample instructions (symbol table replace Address And Index Register Error) " in {
+
+    val programLines = List(
+      "ADDER    START   BEGIN",
+      "         AND     GR3, GR3   ; for unit test",
+      "         AND     GR4, GR4   ; for unit test",
+      "BEGIN    NOP",
+      "         LD      GR0, NUM1",
+      "         LD      GR1, NUM1",
+      "         NOP",
+      "         ADDA    GR0, GR1",
+      "         LD      GR3, GR0",
+      "         SUBA    GR3, =5",
+      "         JNZ     LOOP, GR7",
+      "         JUMP    14",
+      "         NOP",
+      "         JUMP    16",
+      "         NOP",
+      "         ADDA    GR0, NUM2   ; 0x30 + 0x02 = 0x32 (ASCII : '2')",
+      "         ST      GR0, OUTPUT ; Store For Output",
+      "         OUT     OUTPUT, LEN",
+      "         RET",
+      "NUM1     DC      1",
+      "NUM2     DC      #30",
+      "LEN      DC      1",
+      "OUTPUT   DS      1",
+      "NUM3     DC      NUM2",
+      "         END"
+    )
+
+
+    val result = ProgramLineParser.parseFirst(programLines)
+
+
+
+    val answer = List(AssemblyInstruction("START",OperandStart(Some(LabelOfOperand("BEGIN",None))),InstructionInfo(-100,0),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(3,3),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("AND1",OperandR1R2(4,4),InstructionInfo(52,1),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(0,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("LD2",OperandR_ADR_X(1,LabelOfOperand("NUM1",None),0),InstructionInfo(16,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA1",OperandR1R2(0,1),InstructionInfo(36,1),"ADDER"),
+      MachineInstruction("LD1",OperandR1R2(3,0),InstructionInfo(20,1),"ADDER"),
+      MachineInstruction("SUBA2",OperandR_ADR_X(3,LabelOfOperand("EL10C2",None),0),InstructionInfo(33,2),"ADDER"),
+      MachineInstruction("JNZ",OperandADR_X(LabelOfOperand("LOOP",None), 7),InstructionInfo(98,2),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("14",14)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("JUMP",OperandADR(AddressOfOperand("16",16)),InstructionInfo(100,2),"ADDER"),
+      MachineInstruction("NOP",OperandNoArg(),InstructionInfo(0,1),"ADDER"),
+      MachineInstruction("ADDA2",OperandR_ADR_X(0,LabelOfOperand("NUM2",None),0),InstructionInfo(32,2),"ADDER"),
+      MachineInstruction("ST",OperandR_ADR_X(0,LabelOfOperand("OUTPUT",None),0),InstructionInfo(17,2),"ADDER"),
+      MacroInstruction("OUT",OperandInOrOut(List(LabelOfOperand("OUTPUT",None), LabelOfOperand("LEN",None))),InstructionInfo(145,3),"ADDER"),
+      MachineInstruction("RET",OperandNoArg(),InstructionInfo(129,1),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("#30",48))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("1",1))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DS",OperandDs(1),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(LabelOfOperand("NUM2",None))),InstructionInfo(0,0),"ADDER"),
+      AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),"ADDER")
+    )
+
+    val answerSymbols = Map(
+      "ADDER.BEGIN" -> 2,
+      "ADDER.NUM1" -> 28,
+      "ADDER.EL10C2" -> 33,
+      "ADDER.NUM2" -> 29,
+      "ADDER.OUTPUT" -> 31,
+      "ADDER.LEN" -> 30,
+      "ADDER.NUM3" -> 32,
+      ".ADDER" -> 0)
+    assert(result.errors === List.empty)
+    assert(result.instructions.map(e => e.model) === answer)
+    assert(result.symbolTable  === answerSymbols)
+
+    val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
+      val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
+    }
+    assert(caught.getMessage === "LABEL not replace address(JNZ, OperandADR_X(LabelOfOperand(LOOP,None),7))")
+    
+  }
+
+
+
 }
