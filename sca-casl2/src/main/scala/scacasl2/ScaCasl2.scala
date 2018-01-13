@@ -19,10 +19,14 @@ object ScaCasl2 {
     */
   def main(args: Array[String]): Unit = {
     try {
-      this.parseFile(this.parseArgs(args))
+      this.parseFile(this.parseArgs(args.toList))
     } catch {
       case e: Exception => 
-        e.printStackTrace()
+        //e.printStackTrace()
+        // println(e.getLocalizedMessage) /Users/matsutomu/work/github/ScaCASL2-ScaCOMET2/sca-casl2/src/test/resources/*/count1_err2.com
+        // println(e.toString) java.nio.file.NoSuchFileException: /Users/matsutomu/work/github/ScaCASL2-ScaCOMET2/sca-casl2/src/test/resources/*/count1_err2.com
+        // println(e.getStackTrace.head.toString)  sun.nio.fs.UnixException.translateToIOException(UnixException.java:86)
+        println(e.toString)
         println(USAGE)
     }
   }
@@ -52,7 +56,7 @@ object ScaCasl2 {
     *
     * @return
     */
-  def parseArgs(args: Array[String]): Options = {
+  def parseArgs(args: List[String]): Options = {
 
     val cliCommand = args.head match {
       case "-a"               => CaslCliCommand.Dump
@@ -65,11 +69,11 @@ object ScaCasl2 {
 
     cliCommand match {
       case CaslCliCommand.Run =>
-        Options(CaslCliCommand.Run, args.toList)
+        Options(CaslCliCommand.Run, args)
       case CaslCliCommand.InputError =>
-        Options(CaslCliCommand.InputError, args.toList)
+        Options(CaslCliCommand.InputError, args)
       case _ =>
-        Options(cliCommand, args.tail.toList)
+        Options(cliCommand, args.tail)
 
     }
   }

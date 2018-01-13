@@ -2,6 +2,7 @@ package scacasl2
 
 import java.io.{ByteArrayOutputStream, PrintStream}
 
+import better.files.File
 import org.scalatest._
 
 
@@ -136,6 +137,19 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
       out.flush()
       outStream.toString("utf-8")
     }
+  }
+
+
+  "ScaCasl2 main " should " execute but exception" in {
+    val currentDirectory = new java.io.File(".").getCanonicalPath
+
+    val ret = this.runCasl2Out(List(s"$currentDirectory/sca-casl2/src/test/resources/count1_err2.cas",
+      s"$currentDirectory/sca-casl2/src/test/resources///*/count1_err2.com").toArray)
+
+    assert(ret ===
+    f"java.nio.file.NoSuchFileException: $currentDirectory/sca-casl2/src/test/resources/*/count1_err2.com%n" +
+    "usage:ScaCasl2$ [options] input.cas [output.com]" + f"%n")
+
   }
 
 }

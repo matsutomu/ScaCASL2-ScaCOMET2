@@ -1236,7 +1236,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
       val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
     }
-    assert(caught.getMessage === "LABEL not replace address(START, OperandStart(Some(LabelOfOperand(BEGIN,None))))")
+    assert(caught.getMessage === "LABEL not replace address(START: BEGIN)")
   }
 
   it should " parse sample instructions (symbol table replace error 'R_ADR_X') " in {
@@ -1318,7 +1318,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
       val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
     }
-    assert(caught.getMessage === "LABEL not replace address(LD2, OperandR_ADR_X(0,LabelOfOperand(NUM1,None),0))")
+    assert(caught.getMessage === "LABEL not replace address(LD2: NUM1)")
   }
 
   it should " parse sample instructions (symbol table replace error 'Operand ADR') " in {
@@ -1399,7 +1399,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
       val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
     }
-    assert(caught.getMessage === "LABEL not replace address(JNZ, OperandADR(LabelOfOperand(LOOP,None)))")
+    assert(caught.getMessage === "LABEL not replace address(JNZ: LOOP)")
 
 
   }
@@ -1482,7 +1482,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
       val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
     }
-    assert(caught.getMessage === "LABEL not replace address(OUT, OperandInOrOut(List(LabelOfOperand(OUTPUT,None), LabelOfOperand(LEN,None))))")
+    assert(caught.getMessage === "LABEL not replace address(OUT: LEN)")
 
 
   }
@@ -1566,7 +1566,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
       val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
     }
-    assert(caught.getMessage === "LABEL not replace address(DC, OperandDc(List(LabelOfOperand(NUM2,None))))")
+    assert(caught.getMessage === "LABEL not replace address(DC: NUM2)")
     
   }
 
@@ -1650,7 +1650,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     val caught = intercept[IllegalArgumentException] { // Result type: IndexOutOfBoundsException
       val byteCode = ProgramLineParser.convertBinaryCode(result.instructions.map(e => e.model), result.symbolTable)
     }
-    assert(caught.getMessage === "LABEL not replace address(JNZ, OperandADR_X(LabelOfOperand(LOOP,None),7))")
+    assert(caught.getMessage === "LABEL not replace address(JNZ: LOOP)")
     
   }
 

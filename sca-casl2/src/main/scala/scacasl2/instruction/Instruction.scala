@@ -76,33 +76,35 @@ trait Instruction {
               this.EXECUTABLE_FILE_START ++ Array(adr_value) ++ Array.fill(5)(0)
             }
             .getOrElse(throw new IllegalArgumentException(
-              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code: ${o.l.get.name})"))
         } else {
           this.EXECUTABLE_FILE_START ++ Array.fill(6)(0)
         }
       case _: OperandNoArg => Array(info.byteCode << 8)
       case o: OperandR1R2  => Array(info.byteCode << 8 | (o.r1 << 4 | o.r2))
       case o: OperandR_ADR_X => if (o.includeLabel) {
+          val lblName = o.address.asInstanceOf[LabelOfOperand].name
           symbolTbl
-            .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
+            .get(scope + "." + lblName)
             .map { adr_value =>
               Array(info.byteCode << 8 | (o.r << 4 | o.x), adr_value)
             }
             .getOrElse(throw new IllegalArgumentException(
-              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code: $lblName)"))
         } else {
           Array(info.byteCode << 8 | (o.r << 4 | o.x),
                 o.address.asInstanceOf[AddressOfOperand].value)
         }
       case o: OperandR => Array(info.byteCode << 8 | o.r << 4)
       case o: OperandADR_X => if (o.includeLabel) {
+          val lblName = o.address.asInstanceOf[LabelOfOperand].name
           symbolTbl
-            .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
+            .get(scope + "." + lblName)
             .map { adr_value =>
               Array(info.byteCode << 8 | o.x, adr_value)
             }
             .getOrElse(throw new IllegalArgumentException(
-              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code: $lblName)"))
         } else {
           Array(info.byteCode << 8 | o.x,
                 o.address.asInstanceOf[AddressOfOperand].value)
@@ -117,7 +119,7 @@ trait Instruction {
                 num
               }
               .getOrElse(throw new IllegalArgumentException(
-                ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+                ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code: ${l.name})"))
           }.toArray
         )
       case o: OperandDs => Array.fill(o.decimal)(0)
@@ -130,24 +132,26 @@ trait Instruction {
                   symbolTbl.getOrElse(
                     scope + "." + e.name,
                     throw new IllegalArgumentException(
-                      ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $o)")))
+                      ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code: ${e.name})")))
               case e: ConstsNumOfOperand    => List(e.value)
               case e: ConstsStringOfOperand => e.array_char
           })
           .toArray
 
       case o: OperandADR => if (o.includeLabel) {
+          val lblName = o.address.asInstanceOf[LabelOfOperand].name
+        
           symbolTbl
-            .get(scope + "." + o.address.asInstanceOf[LabelOfOperand].name)
+            .get(scope + "." + lblName)
             .map { adr_value =>
               Array(info.byteCode << 8 | 0, adr_value)
             }
             .getOrElse(throw new IllegalArgumentException(
-              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code, $ope)"))
+              ERR_NOT_REPLACE_LABEL_ADDRESS + s"($code: $lblName)"))
         } else {
           Array(info.byteCode << 8 | 0,
                 o.address.asInstanceOf[AddressOfOperand].value)
         }
     }
-
+  
 }
