@@ -270,6 +270,8 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     assert(ScaComet2.parseArgsWaitCommand(List("h", "p1")) ===
       ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
 
+    assert(ScaComet2.parseArgsWaitCommand(List.empty) ===
+      ScaComet2.WatchOptions(WaitForCommand.Retry, Nil, Nil, None, None))
   }
 
   "ScaComet2 " should " load start address " in {
@@ -544,6 +546,120 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     //#todo error input data
   }
 
+ it can  " run (debug execute & no input (= null) ) " in {
 
+    val currentDirectory = new java.io.File(".").getCanonicalPath
+    val consoleOut = this.runCometWithInAndOut(Array("-d","./sca-comet2/src/test/resources/count1.com"),
+      """
+        |
+        |q""".stripMargin)
+
+    assert(consoleOut ===
+      f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
+        """|done.
+           |ScaComet2>b ADDR        Set a breakpoint at specified address.
+           |d NUM         Delete breakpoints.
+           |di ADDR       Disassemble 32 words from specified address.
+           |du ADDR       Dump 128 words of memory.
+           |h             Print help.
+           |i             Print breakpoints.
+           |j ADDR        Set PR to ADDR.
+           |m ADDR VAL    Change the memory at ADDR to VAL.
+           |p             Print register status.
+           |q             Quit.
+           |r             Start execution of program.
+           |s             Step execution.
+           |st            Dump 128 words of stack image.
+           |ScaComet2>b ADDR        Set a breakpoint at specified address.
+           |d NUM         Delete breakpoints.
+           |di ADDR       Disassemble 32 words from specified address.
+           |du ADDR       Dump 128 words of memory.
+           |h             Print help.
+           |i             Print breakpoints.
+           |j ADDR        Set PR to ADDR.
+           |m ADDR VAL    Change the memory at ADDR to VAL.
+           |p             Print register status.
+           |q             Quit.
+           |r             Start execution of program.
+           |s             Step execution.
+           |st            Dump 128 words of stack image.
+           |ScaComet2>""".stripMargin)
 
   }
+
+  it can  " run (step count & dump file)" in {
+
+    val currentDirectory = new java.io.File(".").getCanonicalPath
+    val consoleOut = this.runCometOut(Array("-c","-du","./sca-comet2/src/test/resources/count1.com"))
+
+    // todo compare dumptext
+    assert(consoleOut === f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
+        """|done.
+          |Step count: 9
+          |""".stripMargin)
+
+  }
+
+  it can  " run (wait loop & dump file)" in {
+
+    val currentDirectory = new java.io.File(".").getCanonicalPath
+    val consoleOut = this.runCometWithInAndOut(Array("-d","./sca-comet2/src/test/resources/count1.com"),
+      """df
+        |q""".stripMargin)
+
+    println(consoleOut)
+    // todo compare dumptext
+    assert(consoleOut === f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
+      """done.
+        |ScaComet2>ScaComet2>""".stripMargin)
+
+  }
+  it can  " run (watch variables)" in {
+
+    val currentDirectory = new java.io.File(".").getCanonicalPath
+    val consoleOut = this.runCometOut(Array("-w","PR,GR0,GR1,ZF,","./sca-comet2/src/test/resources/count1.com"))
+
+    assert(consoleOut === f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
+      """|done.
+         |0000: PR=#0000,GR0=#0000,GR1=#0000,ZF=0
+         |0001: PR=#0002,GR0=#0000,GR1=#0000,ZF=0
+         |0002: PR=#0004,GR0=#0000,GR1=#0000,ZF=0
+         |0003: PR=#0005,GR0=#0000,GR1=#0000,ZF=1
+         |0004: PR=#0006,GR0=#0000,GR1=#0000,ZF=1
+         |0005: PR=#000F,GR0=#0000,GR1=#0000,ZF=1
+         |0006: PR=#0010,GR0=#0000,GR1=#0000,ZF=1
+         |0007: PR=#0011,GR0=#0000,GR1=#0000,ZF=1
+         |0008: PR=#0012,GR0=#0000,GR1=#0000,ZF=1
+         |""".stripMargin)
+
+  }
+
+  it should " display error input file " in {
+
+    val currentDirectory = new java.io.File(".").getCanonicalPath
+    val consoleOut = this.runCometOut(Array("./sca-comet2/src/test/resources/count1_err.com"))
+
+    assert(consoleOut === f"load $currentDirectory/sca-comet2/src/test/resources/count1_err.com ...%n" +
+      """|no good file size: 53
+         |""".stripMargin)
+
+  }
+
+  it should " display error null param " in {
+
+    val consoleOut = this.runCometOut(Array(null))
+
+    assert(consoleOut ===  """java.lang.NullPointerException
+        |usage:ScaComet2$ [options] input.com
+        |Options:
+        |  -h,  --help         show this help message and exit.
+        |  -c,  --count-step   count step.
+        |  -d,  --debug        debug execute.
+        |  -du, --dump         dump last status to last_state.txt.
+        |  -w,  --watch        watch registers.
+        |  -v,  --version display       version and  exit.
+        |""".stripMargin)
+
+  }
+
+}

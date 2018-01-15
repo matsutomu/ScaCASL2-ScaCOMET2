@@ -20,6 +20,8 @@ task/src/main/resources/
 build/target/
 standalone-build/
 
+*.txt
+
 *.pdf
 *.jar
 *.com

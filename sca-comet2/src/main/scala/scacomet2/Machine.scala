@@ -829,7 +829,7 @@ class Machine {
 
   def ret: Operand => Unit  = (_: Operand) => {
     if (this.callLevelCounter == 0) {
-      this.stepCounter = this.stepCounter + 1
+      //this.stepCounter = this.stepCounter + 1
       this.programRunning = false
 
     } else {

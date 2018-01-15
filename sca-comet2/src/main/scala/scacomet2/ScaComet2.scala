@@ -51,7 +51,6 @@ object ScaComet2 {
   /**
     * COMETII entry point
     *
-    * @param args
     */
   def main(args: Array[String]): Unit = {
     try {
@@ -81,7 +80,7 @@ object ScaComet2 {
                 }
 
                 if (options.countStep)
-                  System.out.println("Step count: " + machine.stepCount)
+                  println("Step count: " + machine.stepCount)
 
                 if (options.dump)
                   this.dumpToFile(machine)
@@ -95,13 +94,9 @@ object ScaComet2 {
         }
       }
     } catch {
-      case e: Exception => {
-        println(e.getMessage)
-
-        e.printStackTrace
-
+      case e: Exception => 
+        println(e.toString)
         println(MSG_HELP)
-      }
     }
 
   }
@@ -109,8 +104,6 @@ object ScaComet2 {
   /**
     * parse args
     *
-    * @param args
-    * @return
     */
   def parseArgs(args: Array[String]): CLIOptions = {
 
@@ -137,18 +130,18 @@ object ScaComet2 {
         case "-c" | "--count-step" => countStep = true
         case "-du" | "--dump"      => dump = true
         case "-D" | "--decimal"    => decimal = true
-        case "-w" => {
+        case "-w" => 
           watch = true
           before = "-w"
-        }
-        case option if before == "-w" => {
+          
+        case option if before == "-w" => 
           tempWatchVariable = option
           before = ""
-        }
-        case option if option.startsWith(WATCH_COMMAND) => {
+          
+        case option if option.startsWith(WATCH_COMMAND) => 
           watch = true
           tempWatchVariable = option.substring(WATCH_COMMAND.length)
-        }
+        
         case option if option.startsWith("-") =>
           cliCommand = CliCommand.InputError
         case other => tmpArgList += other
@@ -164,7 +157,7 @@ object ScaComet2 {
                    v,
                    decimal,
                    tmpArgList.toList)
-      case Left(e) =>
+      case Left(_) =>
         CLIOptions(CliCommand.InputError,
                    countStep,
                    dump,
@@ -180,8 +173,7 @@ object ScaComet2 {
 
     if (targets.trim.length == 0) Right(Nil)
     else if (targetList
-               .filterNot(s => s.matches(Machine.WATCH_VARIABLE_REGS))
-               .size == 0) {
+                 .forall(s => s.matches(Machine.WATCH_VARIABLE_REGS))) {
       Right(targetList)
     } else {
       Left(s"invalid watch variable: $targets")
@@ -191,11 +183,6 @@ object ScaComet2 {
   /**
     * CLI args convert to Options
     *
-    * @param cliCommand
-    * @param countStep
-    * @param dump
-    * @param watch
-    * @param argList
     */
   case class CLIOptions(cliCommand: CliCommand,
                         countStep: Boolean,
@@ -205,16 +192,13 @@ object ScaComet2 {
                         decimal: Boolean,
                         argList: List[String]) {
 
-    def comFileName = argList.head
+    def comFileName: String = argList.head
 
   }
 
   /**
     * Loaded program run
     *
-    * @param machine
-    * @param watch
-    * @param watchDecimal
     */
   def run(machine: Machine,
           watch: Boolean = false,
@@ -222,7 +206,8 @@ object ScaComet2 {
 
     while (this.running && !machine.containsBreakPoint(machine.PR.word)) {
       if (watch) {
-        machine.watchInfo(watchDecimal).foreach(println)
+        
+        println(f"${machine.stepCount}%04d: " + machine.watchInfo(watchDecimal).mkString(","))
       }
       this.running = machine.step()
     }
@@ -237,14 +222,12 @@ object ScaComet2 {
   /**
     * Assembly File Convert To Binary Data
     *
-    * @param file
-    * @return
     */
   def load(file: File): Either[String, BinaryData] = {
 
     if (file.size != 0) {
       val buffByte = file.byteArray
-      if (buffByte.size % 2 == 0) { // 1 word = 16 bit = 2 * 1 Byte
+      if (buffByte.length % 2 == 0) { // 1 word = 16 bit = 2 * 1 Byte
         val buffInt = new ListBuffer[Int]
         val it = buffByte.grouped(2)
         while (it.hasNext) {
@@ -258,7 +241,7 @@ object ScaComet2 {
         else
           Left(s"no CASLII file: ${file.path}")
       } else {
-        Left(s"no good file size: ${buffByte.size}")
+        Left(s"no good file size: ${buffByte.length}")
       }
     } else {
       Left(s"input file no data: ${file.path}")
@@ -266,9 +249,8 @@ object ScaComet2 {
 
   }
 
-  /**
+  /** Wait Loop for Debug mode
     *
-    * @param machine
     */
   def waitForCommand(machine: Machine): Unit = {
 
@@ -288,30 +270,23 @@ object ScaComet2 {
         case WaitForCommand.PrintBreakPoints =>
           machine.breakPointInfo.foreach(println)
         case WaitForCommand.JumpToAddress =>
-          optForWait.targetAddress1.map { address =>
-            machine.PR.word = address
-          }
+          optForWait.targetAddress1.foreach(machine.PR.word = _)
         case WaitForCommand.WriteMemory =>
-          optForWait.targetAddress1.map { address =>
-            optForWait.targetAddress2.map { value =>
-              machine.memory(address) = value
-            }
+          optForWait.targetAddress1.foreach{ address =>
+            optForWait.targetAddress2.foreach(machine.memory(address) = _)
           }
-        case WaitForCommand.Run => {
-          this.run(machine)
-        }
+        case WaitForCommand.Run => this.run(machine)
         case WaitForCommand.Step => this.running = machine.step()
         case WaitForCommand.PrintStatus =>
-          machine.statusInfo.foreach(println(_))
+          machine.statusInfo.foreach(println)
         case WaitForCommand.Disassemble =>
           machine
             .disassemble(optForWait.targetAddress1.getOrElse(0x0000), 16)
             .foreach(println)
         case WaitForCommand.DumpToConsole =>
           this.dump(machine, optForWait.targetAddress1.get).foreach(println(_))
-        case WaitForCommand.DumpToFile => {
+        case WaitForCommand.DumpToFile =>
           this.dumpToFile(machine)
-        }
         case WaitForCommand.DumpStack =>
           this.dump(machine, machine.SP.word).foreach(println(_))
         case WaitForCommand.PrintHelp => println(this.MSG_HELP_FOR_WAIT_LOOP)
@@ -323,10 +298,8 @@ object ScaComet2 {
   /**
     * Wait Loop  Parse Input Command
     *
-    * @param args
-    * @return
     */
-  def parseArgsWaitCommand(args: List[String]) = {
+  def parseArgsWaitCommand(args: List[String]): WatchOptions = {
 
     try {
 
@@ -343,7 +316,7 @@ object ScaComet2 {
               if param.nonEmpty && args.tail.forall(e =>
                 Helper.includeAddress(e)) =>
             (WaitForCommand.AddBreakPoints,
-             args.tail.map(e => Helper.parseInt(e)).toList,
+             args.tail.map(e => Helper.parseInt(e)),
              Nil,
              None,
              None)
@@ -378,7 +351,7 @@ object ScaComet2 {
                 e => Helper.includeAddress(e)) =>
             (WaitForCommand.DeleteBreakPoints,
              Nil,
-             param.map(e => Helper.parseInt(e)).toList,
+             param.map(e => Helper.parseInt(e)),
              None,
              None)
           case "d" :: Nil => (WaitForCommand.Retry, Nil, Nil, None, None)
@@ -427,11 +400,6 @@ object ScaComet2 {
     *
     * Watch args convert to Options For Watch Mode
     *
-    * @param command
-    * @param breakPoints
-    * @param breakPointIndexes
-    * @param targetAddress1
-    * @param targetAddress2
     */
   case class WatchOptions(command: WaitForCommand,
                           breakPoints: List[Int],
