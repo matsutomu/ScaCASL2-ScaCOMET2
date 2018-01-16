@@ -36,7 +36,8 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
     )
 
     assert(this.runCometOut(Array("-a")) ===
-      "usage:ScaComet2$ [options] input.com" + f"%n" +
+      f"invalid option%n" +
+        "usage:ScaComet2$ [options] input.com" + f"%n" +
         f"Options:%n" +
         f"  -h,  --help         show this help message and exit.%n" +
         f"  -c,  --count-step   count step.%n" +
@@ -75,57 +76,57 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
   "ScaComet2 main parameter parser " should " parse argument for CLI Commands " in {
     assert(ScaComet2.parseArgs(Array.empty[String]) ===
-      CLIOptions(CliCommand.InputError,false,false,false,List(),false,List()))
+      CLIOptions(CliCommand.InputError,false,false,false,List(),false,List(), Some("invalid option")))
 
     assert(ScaComet2.parseArgs(Array("-h")) ===
-      CLIOptions(CliCommand.Help,false,false,false,List(),false,List()))
+      CLIOptions(CliCommand.Help,false,false,false,List(),false,List(), None))
 
     assert(ScaComet2.parseArgs(Array("--help")) ===
-      CLIOptions(CliCommand.Help,false,false,false,List(),false,List()))
+      CLIOptions(CliCommand.Help,false,false,false,List(),false,List(), None))
 
     assert(ScaComet2.parseArgs(Array("-c")) ===
-      CLIOptions(CliCommand.Run, true, false, false, List(), false, List()))
+      CLIOptions(CliCommand.Run, true, false, false, List(), false, List(), None))
 
     assert(ScaComet2.parseArgs(Array("--count-step")) ===
-      CLIOptions(CliCommand.Run, true, false, false, List(), false, List()))
+      CLIOptions(CliCommand.Run, true, false, false, List(), false, List(), None))
 
     assert(ScaComet2.parseArgs(Array("-d")) ===
-      CLIOptions(CliCommand.Debug,false,false,false,List(),false,List()))
+      CLIOptions(CliCommand.Debug,false,false,false,List(),false,List(), None))
 
     assert(ScaComet2.parseArgs(Array("--debug")) ===
-      CLIOptions(CliCommand.Debug,false,false,false,List(),false,List()))
+      CLIOptions(CliCommand.Debug,false,false,false,List(),false,List(), None))
 
     assert(ScaComet2.parseArgs(Array("-du")) ===
-      CLIOptions(CliCommand.Run, false, true, false, List(), false, List()))
+      CLIOptions(CliCommand.Run, false, true, false, List(), false, List(), None))
 
     assert(ScaComet2.parseArgs(Array("--dump")) ===
-      CLIOptions(CliCommand.Run, false, true, false, List(), false, List()))
+      CLIOptions(CliCommand.Run, false, true, false, List(), false, List(), None))
 
     assert(ScaComet2.parseArgs(Array("-w","PR,OF,SF")) ===
-      CLIOptions(CliCommand.Run, false, false, true, List("PR","OF","SF"), false, Nil))
+      CLIOptions(CliCommand.Run, false, false, true, List("PR","OF","SF"), false, Nil, None))
 
     assert(ScaComet2.parseArgs(Array("--watch=PR,OF,SF")) ===
-      CLIOptions(CliCommand.Run, false, false, true, List("PR","OF","SF"), false, Nil))
+      CLIOptions(CliCommand.Run, false, false, true, List("PR","OF","SF"), false, Nil, None))
 
     assert(ScaComet2.parseArgs(Array("-v")) ===
-      CLIOptions(CliCommand.Version, false, false, false, List(), false, List()))
+      CLIOptions(CliCommand.Version, false, false, false, List(), false, List(), None))
 
     assert(ScaComet2.parseArgs(Array("--version")) ===
-      CLIOptions(CliCommand.Version, false, false, false, List(), false, List()))
+      CLIOptions(CliCommand.Version, false, false, false, List(), false, List(), None))
 
     assert(ScaComet2.parseArgs(Array("-h", "-c", "-d", "-du", "-w", "PR,OF,SF", "-v","other-optisons")) ===
-      CLIOptions(CliCommand.Help, true, true, true, List("PR", "OF", "SF"), false, List("other-optisons")))
+      CLIOptions(CliCommand.Help, true, true, true, List("PR", "OF", "SF"), false, List("other-optisons"), None))
 
     // Not Supported Decimal
   }
 
   it should " parse argument invalid param Or no good watch variables " in {
     assert(ScaComet2.parseArgs(Array("-e","AR,OF,SF")) ===
-      CLIOptions(CliCommand.InputError, false, false, false, Nil, false, List("AR,OF,SF")))
+      CLIOptions(CliCommand.InputError, false, false, false, Nil, false, List("AR,OF,SF"), Some("invalid option")))
 
 
     assert(ScaComet2.parseArgs(Array("-w","AR,OF,SF")) ===
-      CLIOptions(CliCommand.InputError, false, false, true, Nil, false, Nil))
+      CLIOptions(CliCommand.InputError, false, false, true, Nil, false, Nil, Some("invalid watch variable: AR,OF,SF")))
   }
 
   it should " parse watch parameter  " in {
@@ -607,13 +608,13 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
       """df
         |q""".stripMargin)
 
-    println(consoleOut)
     // todo compare dumptext
     assert(consoleOut === f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
       """done.
         |ScaComet2>ScaComet2>""".stripMargin)
 
   }
+
   it can  " run (watch variables)" in {
 
     val currentDirectory = new java.io.File(".").getCanonicalPath
@@ -661,5 +662,45 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
         |""".stripMargin)
 
   }
+
+
+  it can  "'t del break point " in {
+
+    val currentDirectory = new java.io.File(".").getCanonicalPath
+    val consoleOut = this.runCometWithInAndOut(Array("-d","./sca-comet2/src/test/resources/count1.com"),
+      """b #2
+        |d 1
+        |b 2
+        |b 6
+        |d 3
+        |q""".stripMargin)
+
+    assert(consoleOut ===
+      f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
+        """|done.
+          |ScaComet2>ScaComet2>ScaComet2>ScaComet2>ScaComet2> can't delete BreakPoint(3)
+           |ScaComet2>""".stripMargin)
+  
+    
+    
+  }
+
+  it can  "'t watch variables " in {
+
+    val consoleOut = this.runCometOut(Array("-w","P1,GR0,GR9,FF","./sca-comet2/src/test/resources/count1.com"))
+
+    assert(consoleOut === f"invalid watch variable: P1,GR0,GR9,FF%n" +
+      """|usage:ScaComet2$ [options] input.com
+         |Options:
+         |  -h,  --help         show this help message and exit.
+         |  -c,  --count-step   count step.
+         |  -d,  --debug        debug execute.
+         |  -du, --dump         dump last status to last_state.txt.
+         |  -w,  --watch        watch registers.
+         |  -v,  --version display       version and  exit.
+         |""".stripMargin)
+
+  }
+
 
 }

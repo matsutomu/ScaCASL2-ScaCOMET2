@@ -58,7 +58,9 @@ object ScaComet2 {
       options.cliCommand match {
         case CliCommand.Version    => println(this.MSG_VERSION)
         case CliCommand.Help       => println(this.MSG_HELP)
-        case CliCommand.InputError => println(this.MSG_HELP)
+        case CliCommand.InputError =>
+          if(options.errMsg.isDefined) println(options.errMsg.get)
+          println(this.MSG_HELP)
         case CliCommand.Run | CliCommand.Debug => {
           // #todo file close ?
           val f1 = File(options.comFileName)
@@ -70,7 +72,6 @@ object ScaComet2 {
                 println(s"done.")
                 //l.copyToArray(objM.memory, 0, l.length)
                 machine.storeToMemory(l.startPr, l.binaryData.toArray)
-
                 this.running = true
                 options.watchVariables.foreach(machine.addWatch)
                 if (options.cliCommand == CliCommand.Run) {
@@ -148,24 +149,35 @@ object ScaComet2 {
       }
     }
 
-    this.parseWatchVariable(tempWatchVariable) match {
-      case Right(v) =>
-        CLIOptions(cliCommand,
-                   countStep,
-                   dump,
-                   watch,
-                   v,
-                   decimal,
-                   tmpArgList.toList)
-      case Left(_) =>
-        CLIOptions(CliCommand.InputError,
-                   countStep,
-                   dump,
-                   watch,
-                   Nil,
-                   decimal,
-                   tmpArgList.toList)
+    if(cliCommand == CliCommand.InputError){
+      CLIOptions(cliCommand,
+        countStep,
+        dump,
+        watch,
+        Nil,
+        decimal,
+        tmpArgList.toList, Some("invalid option"))
+    } else {
+      this.parseWatchVariable(tempWatchVariable) match {
+        case Right(v) =>
+          CLIOptions(cliCommand,
+            countStep,
+            dump,
+            watch,
+            v,
+            decimal,
+            tmpArgList.toList, None)
+        case Left(m) =>
+          CLIOptions(CliCommand.InputError,
+            countStep,
+            dump,
+            watch,
+            Nil,
+            decimal,
+            tmpArgList.toList, Some(m))
+      }
     }
+    
   }
 
   def parseWatchVariable(targets: String): Either[String, List[String]] = {
@@ -190,7 +202,8 @@ object ScaComet2 {
                         watch: Boolean,
                         watchVariables: List[String],
                         decimal: Boolean,
-                        argList: List[String]) {
+                        argList: List[String],
+                        errMsg: Option[String]) {
 
     def comFileName: String = argList.head
 
@@ -266,7 +279,10 @@ object ScaComet2 {
         case WaitForCommand.AddBreakPoints =>
           optForWait.breakPoints.foreach(machine.addBreakPoint)
         case WaitForCommand.DeleteBreakPoints =>
+          optForWait.breakPointIndexes.filterNot(_ <= machine.breakPointInfo().length)
+            .foreach(x => println(s" can't delete BreakPoint($x)"))
           optForWait.breakPointIndexes.foreach(machine.deleteBreakPoint)
+            
         case WaitForCommand.PrintBreakPoints =>
           machine.breakPointInfo.foreach(println)
         case WaitForCommand.JumpToAddress =>

@@ -282,26 +282,22 @@ class Machine {
     }.toList
   }
 
-  // #todo return exception?
   def deleteBreakPoint(index: Int): Unit = {
     val i = index - 1
     if (this.breakPoints.indices.contains(i)) {
       this.breakPoints =
         this.breakPoints.filterNot(_ == this.breakPoints(i)).sorted
-    } else {
-      throw new ArrayIndexOutOfBoundsException
-    }
+    }// not contains check & print information before 
   }
 
   /**  Watch Register, Memory **/
   private var watchTargets: Set[String] = Set.empty[String]
-  def addWatch(target: String): Unit = {
+  
+  def addWatch(target: String): Unit = 
     if (target.matches(Machine.WATCH_VARIABLE_REGS)) {
       this.watchTargets += target
-    } else {
-      throw new IllegalArgumentException(target)
-    }
-  }
+    }// not contains check & print information before 
+  
 
   def delWatch(target: String): Unit = this.watchTargets -= target
 
