@@ -6,7 +6,6 @@ package scacomet2
   *
   * StackPointer : can't override word!
   *
-  * @param
   */
 sealed abstract class Register {
   var word: Int
