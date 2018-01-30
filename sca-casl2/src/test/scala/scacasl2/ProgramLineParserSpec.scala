@@ -9,22 +9,22 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
   "Program Line Parser" should " parse  START" in {
     assert(ProgramLineParser.parseLine("CASL START MAIN", 1) ===
-      Right(InstructionLine(Option("CASL"), "START", Option(List("MAIN")), None, 1, "CASL START MAIN")))
+      Right(InstructionLine(Option("CASL"), "START", List("MAIN"), None, 1, "CASL START MAIN")))
 
     assert(ProgramLineParser.parseLine("CASL START main", 1) ===
-      Right(InstructionLine(Option("CASL"), "START", Option(List("main")), None, 1, "CASL START main")))
+      Right(InstructionLine(Option("CASL"), "START", List("main"), None, 1, "CASL START main")))
 
     assert(ProgramLineParser.parseLine("CASL START  GR0, GR1", 1) ===
-      Right(InstructionLine(Option("CASL"), "START", Option(List("GR0", "GR1")), None, 1, "CASL START  GR0, GR1")))
+      Right(InstructionLine(Option("CASL"), "START", List("GR0", "GR1"), None, 1, "CASL START  GR0, GR1")))
 
     assert(ProgramLineParser.parseLine(" START GR0, GR1", 2) ===
-      Right(InstructionLine(None, "START", Option(List("GR0", "GR1")), None, 2, " START GR0, GR1")))
+      Right(InstructionLine(None, "START", List("GR0", "GR1"), None, 2, " START GR0, GR1")))
 
   }
 
   it should "parse LAD (free operands)" in {
     assert(ProgramLineParser.parseLine(" LAD GR0, GR1 ,  GR2", 3) ===
-      Right(InstructionLine(None, "LAD", Option(List("GR0", "GR1", "GR2")), None, 3, " LAD GR0, GR1 ,  GR2")))
+      Right(InstructionLine(None, "LAD", List("GR0", "GR1", "GR2"), None, 3, " LAD GR0, GR1 ,  GR2")))
 
   }
 
@@ -56,7 +56,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine(line, 1) match {
       case Right(result) =>
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(resOpe) =>
             val instruct = resOpe.asInstanceOf[Instruction]
 
@@ -261,7 +261,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine(" NOP  START  ", 2) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => // nop
           case Left(msg) => assert(msg === "No Good Operands (NOP: START)")
         }
@@ -275,7 +275,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR0", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR0)")
         }
@@ -285,7 +285,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR1", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR1)")
         }
@@ -296,7 +296,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR2", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR2)")
         }
@@ -307,7 +307,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR3", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR3)")
         }
@@ -317,7 +317,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR4", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR4)")
         }
@@ -327,7 +327,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR5", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR5)")
         }
@@ -337,7 +337,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR6", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR6)")
         }
@@ -348,7 +348,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START GR7", 1) match {
       case Right(result) =>
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: GR7)")
         }
@@ -358,7 +358,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("CASL START main", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (START: main)")
         }
@@ -372,7 +372,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
     ProgramLineParser.parseLine("   ST #B GR0", 1) match {
       case Right(result) => 
         val pl = result.asInstanceOf[InstructionLine]
-        InstructionFactory.parseOperand(pl.code, pl.operands.getOrElse(List.empty), "") match {
+        InstructionFactory.parseOperand(pl.code, pl.operands, "") match {
           case Right(_) => throw new RuntimeException
           case Left(msg) => assert(msg === "No Good Operands (ST: #B GR0)")
         }
@@ -756,7 +756,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
         List(ParseError(2147483646,"No Good Operands(OUT, EL2147483646C1,EL2147483646C2)","",programLine)), 
         List(AdditionalDc(".EL2147483646C2",AssemblyInstruction("DC",OperandDc(List(ConstsNumOfOperand("5",5))),InstructionInfo(0,0),""))),
         List(s"No Good Operands (DC: '$errorVal')"),
-        false,false,"",0,Some(List("EL2147483646C1","EL2147483646C2")))
+        false,false,"",0,List("EL2147483646C1","EL2147483646C2"))
     )
   }
 

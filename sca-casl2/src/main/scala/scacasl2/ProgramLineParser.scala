@@ -25,7 +25,7 @@ trait ProgramLine
   */
 case class InstructionLine(lbl: Option[String],
                            code: String,
-                           operands: Option[List[String]],
+                           operands: List[String],
                            comment: Option[String],
                            line_number: Int,
                            raw_string: String)
@@ -66,7 +66,7 @@ object ProgramLineParser extends RegexParsers {
       case lbl ~ sp1 ~ inst_code ~ opes ~ cmt =>
         InstructionLine(lbl,
                         inst_code.trim,
-                        Some(opes.map(e => e.trim)),
+                        opes.map(e => e.trim),
                         cmt,
                         0,
                         "")
@@ -75,7 +75,7 @@ object ProgramLineParser extends RegexParsers {
   private def inst_line_no_ope =
     opt(label) ~ casl_white_space ~ code ~ opt(annotation) ^^ {
       case lbl ~ sp ~ inst_code ~ cmt =>
-        InstructionLine(lbl, inst_code, None, cmt, 0, "")
+        InstructionLine(lbl, inst_code, List.empty[String], cmt, 0, "")
     }
 
   private def comment_line = opt(casl_white_space) ~> annotation ^^ {
@@ -144,7 +144,7 @@ object ProgramLineParser extends RegexParsers {
                                 input))
             else
               Left(InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE +
-                s"(${r.code}, ${r.operands.getOrElse(List.empty).mkString(",")})")
+                s"(${r.code}, ${r.operands.mkString(",")})")
         }
       case NoSuccess(msg, _) => Left(msg)
     }

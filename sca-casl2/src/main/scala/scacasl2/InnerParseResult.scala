@@ -14,7 +14,7 @@ private[scacasl2] case class InnerParseResult(
     isDataExists: Boolean = false,
     currentScope: String,
     instStepCounter: Int,
-    currentOperands: Option[List[String]]) {
+    currentOperands: List[String]) {
 
   /**
     * Good Parse Result
@@ -31,7 +31,7 @@ private[scacasl2] case class InnerParseResult(
     if (line.code == AssemblyInstruction.START && this.currentScope.isEmpty)
       this.copy(currentScope = line.lbl.getOrElse(""))
     else
-      this.copy()
+      this
   }
 
   /**
@@ -54,19 +54,17 @@ private[scacasl2] case class InnerParseResult(
     *
     */
   private def convertForEqualConstants(
-      operands: Option[List[String]],
-      currentScope: String): InnerParseResult = {
-
-    if (operands.isDefined) {
-      val replaced = this.procIncludeEqualOperands(operands.get)
-      this.copy(currentOperands = Some(replaced.replacedOperand),
-                additionalDc = replaced.dc ::: this.additionalDc,
-                errAdditionalDc = replaced.errdc ::: this.errAdditionalDc)
-    } else {
-      this.copy(currentOperands = None)
+      operands: List[String],
+      currentScope: String): InnerParseResult = 
+    operands match {
+      case Nil => this.copy(currentOperands = List.empty[String])
+      case _ =>
+        val replaced = this.procIncludeEqualOperands(operands)
+        this.copy(currentOperands = replaced.replacedOperand,
+          additionalDc = replaced.dc ::: this.additionalDc,
+          errAdditionalDc = replaced.errdc ::: this.errAdditionalDc)
+        
     }
-
-  }
 
   case class EqualConstantsResult(replacedOperand: List[String],
                                   dc: List[AdditionalDc],
@@ -137,7 +135,7 @@ private[scacasl2] case class InnerParseResult(
       instruction: InstructionLine): InnerParseResult = {
 
     InstructionFactory.parseOperand(instruction.code,
-                                    this.currentOperands.getOrElse(List.empty),
+                                    this.currentOperands,
                                     this.currentScope) match {
       case Left(msg) => this.appendError(msg, "", instruction.raw_string)
       case Right(c) => 
@@ -343,11 +341,10 @@ private[scacasl2] case class InnerParseResult(
            InstructionRichInfo(
              InstructionLine(Some(a.label),
                              AssemblyInstruction.DC,
-                             Some(
-                               a.instruction.ope
-                                 .asInstanceOf[OperandDc]
-                                 .consts
-                                 .map(y => y.toString)),
+                             a.instruction.ope
+                               .asInstanceOf[OperandDc]
+                               .consts
+                               .map(y => y.toString),
                              None,
                              this.lineNumber,
                              ""),
@@ -393,7 +390,7 @@ object InnerParseResult {
       errAdditionalDc = List.empty[String],
       currentScope = "",
       instStepCounter = 0,
-      currentOperands = None
+      currentOperands = List.empty[String]
     )
   }
 }
