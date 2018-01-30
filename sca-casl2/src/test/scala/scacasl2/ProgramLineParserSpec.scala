@@ -87,7 +87,7 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
       ("CASL START",
         "START", -100, OperandStart(None), 0),
       (" END",
-        "END", -101, OperandNoArg(), 1),
+        "END", -101, OperandNoArg(), 0),
       (" DS 0",
         "DS", 0x00, OperandDs(0), 0),
       ("TEST DS 3",

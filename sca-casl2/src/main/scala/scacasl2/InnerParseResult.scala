@@ -53,17 +53,16 @@ private[scacasl2] case class InnerParseResult(
     * Equal Constants replace
     *
     */
-  private def convertForEqualConstants(
-      operands: List[String],
-      currentScope: String): InnerParseResult = 
+  private def convertForEqualConstants(operands: List[String],
+                                       currentScope: String): InnerParseResult =
     operands match {
       case Nil => this.copy(currentOperands = List.empty[String])
       case _ =>
         val replaced = this.procIncludeEqualOperands(operands)
         this.copy(currentOperands = replaced.replacedOperand,
-          additionalDc = replaced.dc ::: this.additionalDc,
-          errAdditionalDc = replaced.errdc ::: this.errAdditionalDc)
-        
+                  additionalDc = replaced.dc ::: this.additionalDc,
+                  errAdditionalDc = replaced.errdc ::: this.errAdditionalDc)
+
     }
 
   case class EqualConstantsResult(replacedOperand: List[String],
@@ -80,7 +79,7 @@ private[scacasl2] case class InnerParseResult(
         result: EqualConstantsResult): EqualConstantsResult = {
       operands match {
         case Nil => result
-        case x :: y if x.matches(reg_equal) => 
+        case x :: y if x.matches(reg_equal) =>
           val newLabel = s"EL${this.lineNumber}C$currentIndex"
           val res = InstructionFactory.parseOperand(AssemblyInstruction.DC,
                                                     List(x.drop(1)),
@@ -94,7 +93,7 @@ private[scacasl2] case class InnerParseResult(
                           errdc = msg :: result.errdc)
           }
           innerIncludeEqualOperands(y, currentIndex + 1, res)
-        case x :: y => 
+        case x :: y =>
           val res = result.copy(replacedOperand = x :: result.replacedOperand)
           innerIncludeEqualOperands(y, currentIndex + 1, res)
       }
@@ -114,22 +113,22 @@ private[scacasl2] case class InnerParseResult(
 
   /**
     * LABEL & Address to Map(Label, Address)
-    * 
+    *
     */
   private def createNewSymbol(
-      instructionLine: InstructionLine): Option[Map[String, Int]] = {
-    if (instructionLine.lbl.isDefined && this.isValid) {
-      if (this.currentScope == instructionLine.lbl.get) // global start
-        Some(Map("." + instructionLine.lbl.get -> this.instStepCounter))
-      else
-        Some(Map(
-          this.currentScope + "." + instructionLine.lbl.get -> this.instStepCounter))
-    } else None
-  }
+      instructionLine: InstructionLine): Map[String, Int] =
+    instructionLine.lbl match {
+      case Some(lab)
+          if this.isValid && lab == this.currentScope => // global start
+        Map("." + lab -> this.instStepCounter)
+      case Some(lab) if this.isValid =>
+        Map(this.currentScope + "." + lab -> this.instStepCounter)
+      case _ => Map.empty[String, Int]
+    }
 
   /**
     * InstructionLine convert to InnerParseResult
-    * 
+    *
     */
   private def parseInstructionLine(
       instruction: InstructionLine): InnerParseResult = {
@@ -138,124 +137,100 @@ private[scacasl2] case class InnerParseResult(
                                     this.currentOperands,
                                     this.currentScope) match {
       case Left(msg) => this.appendError(msg, "", instruction.raw_string)
-      case Right(c) => 
+      case Right(c) =>
         val newSymbol = this.createNewSymbol(instruction)
 
         instruction.code match {
-          case AssemblyInstruction.START => 
+          case AssemblyInstruction.START if instruction.lbl.isEmpty =>
             // No Label Or exists Start
-            if (instruction.lbl.isEmpty) {
-              this.createInnerResult(
-                instruction,
-                Some(c),
-                newSymbol,
-                None,
-                Some(
-                  ParseError(instruction.line_number,
-                             "START need Label",
-                             "",
-                             instruction.raw_string)),
-                startFound = true,
-                this.isDataExists
-              )
-            } else if (this.startFound) {
-              this.createInnerResult(
-                instruction,
-                Some(c),
-                newSymbol,
-                None,
-                Some(
-                  ParseError(instruction.line_number,
-                             "START is found before END",
-                             "",
-                             instruction.raw_string)),
-                startFound = true,
-                this.isDataExists
-              )
-            } else {
-              this.createInnerResult(instruction,
-                                     Some(c),
-                                     newSymbol,
-                                     instruction.lbl,
-                                     None,
-                                     startFound = true,
-                                     this.isDataExists)
-            }
-          
-          case AssemblyInstruction.END => 
-            if (!this.startFound) {
-              this.createInnerResult(
-                instruction,
-                None,
-                newSymbol,
-                None,
-                Some(
-                  ParseError(instruction.line_number,
-                             "START is not found.",
-                             "",
-                             instruction.raw_string)),
-                startFound = false,
-                this.isDataExists
-              )
-            } else {
-              this.createInnerResult(instruction,
-                                     None,
-                                     newSymbol,
-                                     None,
-                                     None,
-                                     startFound = false,
-                                     this.isDataExists)
-            }
+            this.appendSyntaxError(
+              instruction,
+              c,
+              newSymbol,
+              None,
+              ParseError(instruction.line_number,
+                         "START need Label",
+                         "",
+                         instruction.raw_string),
+              startFound = true,
+              this.isDataExists
+            )
 
-          case MachineInstruction.RET => 
-            if (this.isDataExists) {
-              this.createInnerResult(
-                instruction,
-                Some(c),
-                newSymbol,
-                Some(this.currentScope),
-                Some(
-                  ParseError(instruction.line_number,
-                             "Data definition in program.",
-                             "",
-                             instruction.raw_string)),
-                this.startFound,
-                isDataExists = false
-              )
-            } else {
-              this.createInnerResult(instruction,
-                                     Some(c),
-                                     newSymbol,
-                                     Some(this.currentScope),
-                                     None,
-                                     this.startFound,
-                                     isDataExists = false)
-            }
-
-          case AssemblyInstruction.DS => 
+          case AssemblyInstruction.START if this.startFound =>
+            this.appendSyntaxError(
+              instruction,
+              c,
+              newSymbol,
+              None,
+              ParseError(instruction.line_number,
+                         "START is found before END",
+                         "",
+                         instruction.raw_string),
+              startFound = true,
+              this.isDataExists
+            )
+          case AssemblyInstruction.START =>
             this.createInnerResult(instruction,
-                                   Some(c),
+                                   c,
+                                   newSymbol,
+                                   instruction.lbl,
+                                   startFound = true,
+                                   this.isDataExists)
+
+          case AssemblyInstruction.END if !this.startFound =>
+            this.appendSyntaxError(
+              instruction,
+              c,
+              newSymbol,
+              None,
+              ParseError(instruction.line_number,
+                         "START is not found.",
+                         "",
+                         instruction.raw_string),
+              startFound = false,
+              this.isDataExists
+            )
+          case AssemblyInstruction.END =>
+            this.createInnerResult(instruction,
+                                   c,
+                                   newSymbol,
+                                   None,
+                                   startFound = false,
+                                   this.isDataExists)
+
+          case MachineInstruction.RET if this.isDataExists =>
+            this.appendSyntaxError(
+              instruction,
+              c,
+              newSymbol,
+              Some(this.currentScope),
+              ParseError(instruction.line_number,
+                         "Data definition in program.",
+                         "",
+                         instruction.raw_string),
+              this.startFound,
+              isDataExists = false
+            )
+          case MachineInstruction.RET =>
+            this.createInnerResult(instruction,
+                                   c,
                                    newSymbol,
                                    Some(this.currentScope),
-                                   None,
                                    this.startFound,
-                                   isDataExists = true)
+                                   isDataExists = false)
 
-          case AssemblyInstruction.DC =>
+          case AssemblyInstruction.DS | AssemblyInstruction.DC =>
             this.createInnerResult(instruction,
-                                   Some(c),
+                                   c,
                                    newSymbol,
                                    Some(this.currentScope),
-                                   None,
                                    this.startFound,
                                    isDataExists = true)
-
           case _ =>
             this.createInnerResult(instruction,
-                                   Some(c),
+                                   c,
                                    newSymbol,
                                    Some(this.currentScope),
-                                   None,
                                    this.startFound,
                                    this.isDataExists)
         }
@@ -267,33 +242,40 @@ private[scacasl2] case class InnerParseResult(
     *
     */
   private def createInnerResult(instructionLine: InstructionLine,
-                                instruction: Option[Instruction],
-                                newSymbol: Option[Map[String, Int]],
+                                instruction: Instruction,
+                                newSymbol: Map[String, Int],
                                 scope: Option[String],
-                                parseError: Option[ParseError],
                                 startFound: Boolean,
                                 isDataExists: Boolean): InnerParseResult = {
     this.copy(
       lineNumber = this.lineNumber + 1,
-      instructions =
-        if (instruction.isDefined)
-          InstructionRichInfo(instructionLine, instruction.get) :: this.instructions
-        else this.instructions,
-      symbolTable =
-        if (newSymbol.isDefined) this.symbolTable ++ newSymbol.get
-        else this.symbolTable,
-      currentScope = if (scope.isDefined) scope.get else "",
-      instStepCounter =
-        if (instruction.isDefined)
-          this.instStepCounter + instruction.get.wordSize
-        else this.instStepCounter,
-      errors =
-        if (parseError.isDefined) parseError.get :: this.errors
-        else this.errors,
+      instructions = InstructionRichInfo(instructionLine, instruction) :: this.instructions,
+      symbolTable = this.symbolTable ++ newSymbol,
+      currentScope = scope.getOrElse(""),
+      instStepCounter = this.instStepCounter + instruction.wordSize,
       startFound = startFound,
       isDataExists = isDataExists
     )
 
+  }
+
+  def appendSyntaxError(instructionLine: InstructionLine,
+                        instruction: Instruction,
+                        newSymbol: Map[String, Int],
+                        scope: Option[String],
+                        parseError: ParseError,
+                        startFound: Boolean,
+                        isDataExists: Boolean): InnerParseResult = {
+    this.copy(
+      lineNumber = this.lineNumber + 1,
+      instructions = InstructionRichInfo(instructionLine, instruction) :: this.instructions,
+      symbolTable = this.symbolTable ++ newSymbol,
+      currentScope = scope.getOrElse(""),
+      instStepCounter = this.instStepCounter + instruction.wordSize,
+      errors = parseError :: this.errors,
+      startFound = startFound,
+      isDataExists = isDataExists
+    )
   }
 
   /**
@@ -366,14 +348,15 @@ private[scacasl2] case class InnerParseResult(
     * Output Parse Result
     * @return
     */
-  def parseResult: CaslParseResult =
+  def parseResult: CaslParseResult = {
+    val inst = this.instructions
+      .filterNot(e => e.model.code == AssemblyInstruction.END)
+      .reverse
     if (this.isValid)
-      CaslParseResult(this.instructions.reverse,
-                      this.symbolTable,
-                      this.errors.reverse)
+      CaslParseResult(inst, this.symbolTable, this.errors.reverse)
     else
-      CaslParseResult(this.instructions.reverse, Map.empty, this.errors.reverse)
-
+      CaslParseResult(inst, Map.empty, this.errors.reverse)
+  }
 }
 
 object InnerParseResult {

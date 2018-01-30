@@ -83,7 +83,7 @@ object InstructionFactory {
   val INSTRUCTION_INF_MAP = Map(
     /* Assembly Instructions */
     AssemblyInstruction.START -> InstructionInfo(-100, 0),
-    AssemblyInstruction.END -> InstructionInfo(-101, 1),
+    AssemblyInstruction.END -> InstructionInfo(-101, 0),
     AssemblyInstruction.DS -> InstructionInfo(0, 0),
     AssemblyInstruction.DC -> InstructionInfo(0, 0),
     /* Macro Instructions */
