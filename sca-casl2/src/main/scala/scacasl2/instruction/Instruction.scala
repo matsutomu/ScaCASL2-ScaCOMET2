@@ -69,7 +69,7 @@ trait Instruction {
   def convertToWords(symbolTbl: Map[String, Int]): Array[Int] =
     // #todo refactor
     this.ope match {
-      case o: OperandStart => if (o.l.isDefined) {
+      case o: OperandStart => if (o.includeLabel) {
           symbolTbl
             .get(scope + "." + o.l.get.name)
             .map { adr_value =>

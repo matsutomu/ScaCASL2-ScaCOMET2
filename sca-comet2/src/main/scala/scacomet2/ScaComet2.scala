@@ -59,7 +59,7 @@ object ScaComet2 {
         case CliCommand.Version    => println(this.MSG_VERSION)
         case CliCommand.Help       => println(this.MSG_HELP)
         case CliCommand.InputError =>
-          if(options.errMsg.isDefined) println(options.errMsg.get)
+          options.errMsg.map(println)
           println(this.MSG_HELP)
         case CliCommand.Run | CliCommand.Debug => {
           // #todo file close ?
