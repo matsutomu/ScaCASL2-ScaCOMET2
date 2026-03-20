@@ -142,11 +142,11 @@ class ScaCasl2Spec extends AnyFlatSpec with Matchers {
     val currentDirectory = new java.io.File(".").getCanonicalPath
 
     val ret = this.runCasl2Out(List(s"$currentDirectory/sca-casl2/src/test/resources/count1_err2.cas",
-      s"$currentDirectory/sca-casl2/src/test/resources/count1_err2.com").toArray)
+      s"$currentDirectory/sca-casl2/src/test/no_such_dir/count1_err2.com").toArray)
 
     assert(ret ===
-    f"java.nio.file.NoSuchFileException: $currentDirectory/sca-casl2/src/test/resources/count1_err2.com%n" +
-    "usage:ScaCasl2$ [options] input.cas [output.com]" + f"%n")
+      f"java.io.FileNotFoundException: $currentDirectory/sca-casl2/src/test/no_such_dir/count1_err2.com (No such file or directory)%n" +
+      "usage:ScaCasl2$ [options] input.cas [output.com]" + f"%n")
 
   }
 

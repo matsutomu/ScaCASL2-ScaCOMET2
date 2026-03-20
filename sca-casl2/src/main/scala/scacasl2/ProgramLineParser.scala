@@ -129,7 +129,7 @@ object ProgramLineParser extends RegexParsers {
     * @return
     */
   def parseLine(input: String, lineNo: Int): Either[String, ProgramLine] =
-    this.parseAll(this.instructions, input) match { // parsing.combinator
+    this.parseAll(this.instructions, input) match {
       case Success(result, _) =>
         result match {
           case r: CommentLine => Right(CommentLine(r.comment, lineNo, input))
@@ -146,7 +146,8 @@ object ProgramLineParser extends RegexParsers {
               Left(InstructionFactory.ERR_UNSUPPORTED_OPERATION_CODE +
                 s"(${r.code}, ${r.operands.mkString(",")})")
         }
-      case NoSuccess(msg, _) => Left(msg)
+      case Failure(msg, _) => Left(msg)  // NoSuccessをFailureに
+      case Error(msg, _)   => Left(msg)  // Errorも明示的に処理
     }
 
   /**

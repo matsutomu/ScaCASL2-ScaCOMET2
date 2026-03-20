@@ -547,46 +547,46 @@ class ScaComet2Spec extends AnyFlatSpec with Matchers {
     //#todo error input data
   }
 
- it can  " run (debug execute & no input (= null) ) " in {
+  it can  " run (debug execute & no input (= null) ) " in {
 
-    val currentDirectory = new java.io.File(".").getCanonicalPath
-    val consoleOut = this.runCometWithInAndOut(Array("-d","./sca-comet2/src/test/resources/count1.com"),
-      """
-        |
-        |q""".stripMargin)
+      val currentDirectory = new java.io.File(".").getCanonicalPath
+      val consoleOut = this.runCometWithInAndOut(Array("-d","./sca-comet2/src/test/resources/count1.com"),
+        """
+          |
+          |q""".stripMargin)
 
-    assert(consoleOut ===
-      f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
-        """|done.
-           |ScaComet2>b ADDR        Set a breakpoint at specified address.
-           |d NUM         Delete breakpoints.
-           |di ADDR       Disassemble 32 words from specified address.
-           |du ADDR       Dump 128 words of memory.
-           |h             Print help.
-           |i             Print breakpoints.
-           |j ADDR        Set PR to ADDR.
-           |m ADDR VAL    Change the memory at ADDR to VAL.
-           |p             Print register status.
-           |q             Quit.
-           |r             Start execution of program.
-           |s             Step execution.
-           |st            Dump 128 words of stack image.
-           |ScaComet2>b ADDR        Set a breakpoint at specified address.
-           |d NUM         Delete breakpoints.
-           |di ADDR       Disassemble 32 words from specified address.
-           |du ADDR       Dump 128 words of memory.
-           |h             Print help.
-           |i             Print breakpoints.
-           |j ADDR        Set PR to ADDR.
-           |m ADDR VAL    Change the memory at ADDR to VAL.
-           |p             Print register status.
-           |q             Quit.
-           |r             Start execution of program.
-           |s             Step execution.
-           |st            Dump 128 words of stack image.
-           |ScaComet2>""".stripMargin)
+      assert(consoleOut ===
+        f"load $currentDirectory/sca-comet2/src/test/resources/count1.com ...%n" +
+          """|done.
+            |ScaComet2>b ADDR        Set a breakpoint at specified address.
+            |d NUM         Delete breakpoints.
+            |di ADDR       Disassemble 32 words from specified address.
+            |du ADDR       Dump 128 words of memory.
+            |h             Print help.
+            |i             Print breakpoints.
+            |j ADDR        Set PR to ADDR.
+            |m ADDR VAL    Change the memory at ADDR to VAL.
+            |p             Print register status.
+            |q             Quit.
+            |r             Start execution of program.
+            |s             Step execution.
+            |st            Dump 128 words of stack image.
+            |ScaComet2>b ADDR        Set a breakpoint at specified address.
+            |d NUM         Delete breakpoints.
+            |di ADDR       Disassemble 32 words from specified address.
+            |du ADDR       Dump 128 words of memory.
+            |h             Print help.
+            |i             Print breakpoints.
+            |j ADDR        Set PR to ADDR.
+            |m ADDR VAL    Change the memory at ADDR to VAL.
+            |p             Print register status.
+            |q             Quit.
+            |r             Start execution of program.
+            |s             Step execution.
+            |st            Dump 128 words of stack image.
+            |ScaComet2>""".stripMargin)
 
-  }
+    }
 
   it can  " run (step count & dump file)" in {
 
