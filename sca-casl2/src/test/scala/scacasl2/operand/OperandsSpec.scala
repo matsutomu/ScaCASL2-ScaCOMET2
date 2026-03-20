@@ -1,10 +1,11 @@
 package scacasl2.operand
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class OperandsSpec extends FlatSpec with DiagrammedAssertions {
+class OperandsSpec extends AnyFlatSpec with Matchers {
 
-  "Operand" should " dissassemble and check existence (OperandNoArg) " in {
+  "Operand" should "dissassemble and check existence (OperandNoArg)" in {
     val ope = OperandNoArg()
     assert(ope.disassemble  === "")
     assert(ope.includeLabel === false)

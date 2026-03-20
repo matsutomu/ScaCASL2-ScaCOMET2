@@ -405,7 +405,6 @@ class Machine {
       }
       .splitAt(4) match {
       case (a, b) => List(a.mkString(" "), b.mkString(" "))
-      case _      => Nil
     })
   }
 

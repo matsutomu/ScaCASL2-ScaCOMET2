@@ -1,13 +1,13 @@
 package scacasl2
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import scacasl2.instruction._
 import scacasl2.operand._
 
+class ProgramLineParserSpec extends AnyFlatSpec with Matchers {
 
-class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
-
-  "Program Line Parser" should " parse  START" in {
+  "Program Line Parser" should "parse START" in {
     assert(ProgramLineParser.parseLine("CASL START MAIN", 1) ===
       Right(InstructionLine(Option("CASL"), "START", List("MAIN"), None, 1, "CASL START MAIN")))
 
@@ -661,11 +661,11 @@ class ProgramLineParserSpec extends FlatSpec with DiagrammedAssertions {
 
     assert(result.errors === List(
       ParseError(1,"parse error","Unsupported Instruction(SOUT, START)", " SOUT    START"),
-      ParseError(2,"parse error","string matching regex `;.*$' expected but `1' found","OUT      BUFF1, LEN"),
-      ParseError(3,"parse error","""string matching regex `\s+' expected but end of source found""","RET"),
+      ParseError(2,"parse error","string matching regex '\\s+' expected but '1' found","OUT      BUFF1, LEN"),
+      ParseError(3,"parse error","string matching regex '\\s+' expected but end of source found","RET"),
       ParseError(4,"parse error","Unsupported Instruction(LEN, DC      5)"," LEN      DC      5"),
-      ParseError(5,"parse error","string matching regex `;.*$' expected but `1' found", " BUFF1    DC      'CASL2'"),
-      ParseError(6,"parse error","string matching regex `;.*$' expected but `2' found", " BUFF2    DC      'COMET2'"),
+      ParseError(5,"parse error","string matching regex '\\s+' expected but '1' found", " BUFF1    DC      'CASL2'"),
+      ParseError(6,"parse error","string matching regex '\\s+' expected but '2' found", " BUFF2    DC      'COMET2'"),
       ParseError(7,"START is not found.","","         END")))
     assert(result.instructions.map(e => e.model) === answer)
     assert(result.symbolTable  === answerSymbols)

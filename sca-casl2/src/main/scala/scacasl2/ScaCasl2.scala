@@ -1,6 +1,9 @@
 package scacasl2
 
-import better.files.File
+import scala.jdk.CollectionConverters._
+import java.nio.file.{Files, Paths}
+import java.nio.charset.StandardCharsets
+import java.io.FileOutputStream
 
 /**
   * CALSII Assembler main object class
@@ -95,18 +98,21 @@ object ScaCasl2 {
       println("  -v --version display version and exit")
 
     case CaslCliCommand.Run | CaslCliCommand.Dump => 
-      val f1 = File(options.casFileName)
-      if (f1.exists) {
-        val result = ProgramLineParser.parseFirst(f1.lines.toList)
+      val f1Path = Paths.get(options.casFileName)
+      if (Files.exists(f1Path)) {
+        val lines = Files.readAllLines(f1Path, StandardCharsets.UTF_8).asScala.toList
+        val result = ProgramLineParser.parseFirst(lines)
         if (result.isValid) {
           val binaryData = ProgramLineParser
             .convertBinaryCode(result.instructionModels, result.symbolTable)
 
           options.comFileName match {
             case Some(path) =>
-              val fw = File(path)
-              fw.writeByteArray(binaryData.toArray)
-              println(s"[success]output to ${fw.pathAsString}")
+              val outPath = Paths.get(path)
+              val fos = new FileOutputStream(outPath.toFile)
+              fos.write(binaryData.toArray)
+              fos.close()
+              println(s"[success]output to ${outPath.toAbsolutePath}")
               if (options.command == CaslCliCommand.Dump) {
                 dump(result.instructions, result.symbolTable)
               }
@@ -115,14 +121,14 @@ object ScaCasl2 {
                 s"[error] output parameter error. options(${options.argList.mkString(",")})")
           }
         } else {
-          println(s"[error] It failed to assemble. path:${f1.pathAsString}")
+          println(s"[error] It failed to assemble. path:${f1Path.toAbsolutePath}")
           result.errors.foreach { x =>
             println(s"line: ${x.lineNumber}, message:  ${x.msg}")
             println(s"\t\t  ${x.detailMsg}")
           }
         }
       } else {
-        println(s"[error] no input file. path:${f1.pathAsString}")
+        println(s"[error] no input file. path:${f1Path.toAbsolutePath}")
       }
   }
 

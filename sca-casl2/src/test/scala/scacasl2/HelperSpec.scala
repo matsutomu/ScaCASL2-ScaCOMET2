@@ -1,8 +1,9 @@
 package scacasl2
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-class HelperSpec extends FlatSpec with DiagrammedAssertions {
+class HelperSpec extends AnyFlatSpec with Matchers {
 
   " ParseInt Hex or Decimal" should " convert Int " in {
     assert(Helper.parseInt("#0000") === 0)

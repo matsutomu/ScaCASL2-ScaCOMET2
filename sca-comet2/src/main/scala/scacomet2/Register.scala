@@ -16,10 +16,10 @@ sealed abstract class Register {
 }
 
 object Register {
-  case class GeneralRegister(override var word: Int) extends Register
-  case class IndexRegister(override var word: Int) extends Register
-  case class StackPointer(override var word: Int) extends Register
-  case class ProgramRegister(override var word: Int) extends Register
-  case class FlagRegister(override var word: Int) extends Register
+  class GeneralRegister(var word: Int) extends Register
+  class IndexRegister(var word: Int) extends Register
+  class StackPointer(var word: Int) extends Register
+  class ProgramRegister(var word: Int) extends Register
+  class FlagRegister(var word: Int) extends Register
 
 }

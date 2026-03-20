@@ -2,14 +2,14 @@ package scacomet2
 
 import java.io.{ByteArrayOutputStream, PrintStream, StringReader}
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 import scacomet2.ScaComet2.CLIOptions
 import scacomet2.ScaComet2.BinaryData
 
+class ScaComet2Spec extends AnyFlatSpec with Matchers {
 
-class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
-
-  "ScaComet2 main " should " various parameters processing " in {
+  "ScaComet2 main" should "various parameters processing" in {
     assert(this.runCometOut(Array("-h")) ===
       "usage:ScaComet2$ [options] input.com" + f"%n" +
         f"Options:%n" +
@@ -141,7 +141,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
   "ScaComet2 file loader " should " loading binary data " in {
     val path = getClass.getClassLoader.getResource("count1.com").getPath
-    val f1 = better.files.File(path)
+    val f1 = new java.io.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     assert(ScaComet2.load(f1)
       === Right(BinaryData(0, List(0x7001,    0,   0x7002,   0,0x2522, 0x3411,
@@ -151,15 +151,15 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
   it should " loading error binary data " in {
     val path = getClass.getClassLoader.getResource("count1_err.com").getPath
-    val f1 = better.files.File(path)
-    assert(ScaComet2.load(f1) === Left(s"no good file size: ${f1.size}"))
+    val f1 = new java.io.File(path)
+    assert(ScaComet2.load(f1) === Left(s"no good file size: ${f1.length()}"))
 
     val path2 = getClass.getClassLoader.getResource("count1_err_zero.com").getPath
-    val f2 = better.files.File(path2)
+    val f2 = new java.io.File(path2)
     assert(ScaComet2.load(f2) === Left(s"input file no data: $path2"))
 
     val path3 = getClass.getClassLoader.getResource("count1_no_casl.com").getPath
-    val f3 = better.files.File(path3)
+    val f3 = new java.io.File(path3)
     assert(ScaComet2.load(f3) === Left(s"no CASLII file: $path3"))
 
 
@@ -279,7 +279,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
     // load from file
     val path = getClass.getClassLoader.getResource("start_address.com").getPath
-    val f1 = better.files.File(path)
+    val f1 = new java.io.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     val result = ScaComet2.load(f1)
 
@@ -294,7 +294,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
     // load from file
     val path = getClass.getClassLoader.getResource("count1.com").getPath
-    val f1 = better.files.File(path)
+    val f1 = new java.io.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     val result = ScaComet2.load(f1)
     assert(result === Right(BinaryData(0,
@@ -347,7 +347,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
     // load from file
     val path = getClass.getClassLoader.getResource("count1.com").getPath
-    val f1 = better.files.File(path)
+    val f1 = new java.io.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     val result = ScaComet2.load(f1)
     assert(result === Right(BinaryData(0,
@@ -374,7 +374,7 @@ class ScaComet2Spec extends FlatSpec with DiagrammedAssertions {
 
     // load from file
     val path = getClass.getClassLoader.getResource("count1.com").getPath
-    val f1 = better.files.File(path)
+    val f1 = new java.io.File(path)
     // Skip(16 Byte): 0x43, 0x41, 0x53, 0x4C, 0 (8bit) * 12
     val result = ScaComet2.load(f1)
     assert(result === Right(BinaryData(0,

@@ -8,11 +8,12 @@ lazy val _version = "0.1"
 
 lazy val commonSettings = Seq (
   version := _version,
-  scalaVersion := "2.12.3",
+  scalaVersion := "3.3.0",
   libraryDependencies ++= Seq(
-    "org.scalactic" %% "scalactic" % "3.0.1",
-    "org.scalatest" %% "scalatest" % "3.0.1" % "test",
-    "com.github.pathikrit" %% "better-files" % "3.1.0"
+  "org.scalactic" %% "scalactic" % "3.2.15",
+  "org.scalatest" %% "scalatest" % "3.2.15" % "test",
+     // Removed better-files dependency
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
     )
 )
 
@@ -28,10 +29,8 @@ lazy val scacasl2 = (project in file("sca-casl2")).
   settings(commonSettings: _*).
   settings (
     name := "sca-casl2",
-    mainClass in assembly := Some("scacasl2.ScaCasl2"),
-    libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.6"
-    )
+    assembly / mainClass := Some("scacasl2.ScaCasl2"),
+    // ...existing code...
   )
 
 
@@ -40,5 +39,5 @@ lazy val scacomet2 = (project in file("sca-comet2")).
   settings(commonSettings: _*).
   settings(
     name := "sca-comet2",
-    mainClass in assembly := Some("scacomet2.ScaComet2"),
+    assembly / mainClass := Some("scacomet2.ScaComet2"),
   )

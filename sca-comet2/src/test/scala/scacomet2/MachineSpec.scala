@@ -2,12 +2,12 @@ package scacomet2
 
 import java.io.{ByteArrayOutputStream, PrintStream, StringReader}
 
-import org.scalatest._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
+class MachineSpec extends AnyFlatSpec with Matchers {
 
-class MachineSpec extends FlatSpec with DiagrammedAssertions {
-
-  "Machine" should " execute All Operand Type " in {
+  "Machine" should "execute All Operand Type" in {
     val machine = new Machine()
 
     List(0x0000,         // 00: NOP

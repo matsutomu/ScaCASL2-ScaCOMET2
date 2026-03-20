@@ -1,14 +1,12 @@
 package scacasl2
 
 import java.io.{ByteArrayOutputStream, PrintStream}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import better.files.File
-import org.scalatest._
+class ScaCasl2Spec extends AnyFlatSpec with Matchers {
 
-
-class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
-
-  "ScaCasl2 main " should " execute " in {
+  "ScaCasl2 main" should "execute" in {
     assert(this.runCasl2Out(List("-v","count1.cas").toArray) ===
       f"CASLII Assembler version 0.1 (Scala) %n")
 
@@ -144,10 +142,10 @@ class ScaCasl2Spec extends FlatSpec with DiagrammedAssertions {
     val currentDirectory = new java.io.File(".").getCanonicalPath
 
     val ret = this.runCasl2Out(List(s"$currentDirectory/sca-casl2/src/test/resources/count1_err2.cas",
-      s"$currentDirectory/sca-casl2/src/test/resources///*/count1_err2.com").toArray)
+      s"$currentDirectory/sca-casl2/src/test/resources/count1_err2.com").toArray)
 
     assert(ret ===
-    f"java.nio.file.NoSuchFileException: $currentDirectory/sca-casl2/src/test/resources/*/count1_err2.com%n" +
+    f"java.nio.file.NoSuchFileException: $currentDirectory/sca-casl2/src/test/resources/count1_err2.com%n" +
     "usage:ScaCasl2$ [options] input.cas [output.com]" + f"%n")
 
   }

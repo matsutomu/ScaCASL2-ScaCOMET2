@@ -1,6 +1,10 @@
 package scacomet2
 
-import better.files.File
+import java.nio.file.{Files, Paths}
+import java.io.File
+import java.nio.charset.StandardCharsets
+import scala.collection.mutable.ListBuffer
+import scacasl2.Helper
 
 import scala.collection.mutable.ListBuffer
 import scacasl2.Helper
@@ -63,10 +67,11 @@ object ScaComet2 {
           println(this.MSG_HELP)
         case CliCommand.Run | CliCommand.Debug => {
           // #todo file close ?
-          val f1 = File(options.comFileName)
-          if (f1.exists) {
+          val f1 = new File(options.comFileName)
+          if (f1.exists()) {
             val machine = new Machine()
-            println(s"load ${f1.pathAsString} ...")
+            val absPath = f1.getAbsolutePath.replace("./", "")
+            println(s"load $absPath ...")
             load(f1) match {
               case Right(l) => {
                 println(s"done.")
@@ -90,7 +95,8 @@ object ScaComet2 {
               case Left(message) => println(message)
             }
           } else {
-            println(s"[error] no input file path " + f1.pathAsString)
+            val absPath = f1.getAbsolutePath.replace("./", "")
+            println(s"[error] no input file path " + absPath)
           }
         }
       }
@@ -237,9 +243,8 @@ object ScaComet2 {
     *
     */
   def load(file: File): Either[String, BinaryData] = {
-
-    if (file.size != 0) {
-      val buffByte = file.byteArray
+    val buffByte = Files.readAllBytes(file.toPath)
+    if (buffByte.length != 0) {
       if (buffByte.length % 2 == 0) { // 1 word = 16 bit = 2 * 1 Byte
         val buffInt = new ListBuffer[Int]
         val it = buffByte.grouped(2)
@@ -252,12 +257,12 @@ object ScaComet2 {
             BinaryData(buffInt(CASL_START_PR_INDEX),
                        buffInt.drop(CASL_FILE_PREFIX).toList))
         else
-          Left(s"no CASLII file: ${file.path}")
+          Left(s"no CASLII file: ${file.getAbsolutePath}")
       } else {
         Left(s"no good file size: ${buffByte.length}")
       }
     } else {
-      Left(s"input file no data: ${file.path}")
+      Left(s"input file no data: ${file.getAbsolutePath}")
     }
 
   }
@@ -284,7 +289,7 @@ object ScaComet2 {
           optForWait.breakPointIndexes.foreach(machine.deleteBreakPoint)
             
         case WaitForCommand.PrintBreakPoints =>
-          machine.breakPointInfo.foreach(println)
+          machine.breakPointInfo().foreach(println)
         case WaitForCommand.JumpToAddress =>
           optForWait.targetAddress1.foreach(machine.PR.word = _)
         case WaitForCommand.WriteMemory =>
@@ -294,7 +299,7 @@ object ScaComet2 {
         case WaitForCommand.Run => this.run(machine)
         case WaitForCommand.Step => this.running = machine.step()
         case WaitForCommand.PrintStatus =>
-          machine.statusInfo.foreach(println)
+          machine.statusInfo().foreach(println)
         case WaitForCommand.Disassemble =>
           machine
             .disassemble(optForWait.targetAddress1.getOrElse(0x0000), 16)
@@ -476,8 +481,9 @@ object ScaComet2 {
   }
 
   def dumpToFile(machine: Machine): Unit = {
-    val f = File("last_state.txt") // todo constant
-    f.write(dumpAll(machine).mkString(f"%n"))
+    val path = Paths.get("last_state.txt") // todo constant
+    val content = dumpAll(machine).mkString("\n")
+    Files.write(path, content.getBytes(StandardCharsets.UTF_8))
   }
 
 }

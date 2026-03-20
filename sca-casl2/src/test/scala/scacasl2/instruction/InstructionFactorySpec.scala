@@ -1,11 +1,10 @@
 package scacasl2.instruction
 
 import scacasl2.operand._
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
 
-import org.scalatest._
-
-
-class InstructionFactorySpec extends FlatSpec with DiagrammedAssertions {
+class InstructionFactorySpec extends AnyFlatSpec with Matchers {
 
   "InstructionFactory" can " parse Machine Code and operands " in {
     val nop = InstructionFactory.parseOperand("NOP",List.empty,"")
